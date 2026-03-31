@@ -35,3 +35,8 @@ vendor/
 api/*.csv
 api/*.json
 uploads/
+
+# --- Utilidades Locales ---
+# Ignorar scripts y reportes de estructura local
+estructura.bat
+estructura.txt
