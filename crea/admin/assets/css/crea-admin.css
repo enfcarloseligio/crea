@@ -1,0 +1,111 @@
+/* Ruta: wp-content/plugins/crea/admin/assets/css/crea-admin.css */
+
+/**
+ * 1. VARIABLES GLOBALES DEL TEMA
+ */
+:root {
+	--crea-th-bg: #fcfcfc;
+	--crea-th-text: #1d2327;
+	--crea-tr-odd-bg: #f9f9f9;
+	--crea-tr-odd-text: #50575e;
+	--crea-tr-even-bg: #ffffff;
+	--crea-tr-even-text: #50575e;
+	--crea-primary: #2271b1;
+}
+
+/**
+ * 2. CONTENEDORES RESPONSIVOS (Tarjetas al 100%)
+ */
+.crea-card {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	box-shadow: 0 1px 1px rgba(0,0,0,0.04);
+	padding: 20px;
+	margin-bottom: 20px;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.crea-card-header {
+	border-bottom: 1px solid #f0f0f1;
+	padding-bottom: 15px;
+	margin-bottom: 15px;
+}
+
+.crea-card-header h2 {
+	margin: 0;
+	padding: 0;
+	font-size: 1.3em;
+	font-weight: 600;
+}
+
+/**
+ * 3. TABLAS GLOBALES CREA
+ */
+.crea-table {
+	width: 100%;
+	border-spacing: 0;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	box-shadow: 0 1px 1px rgba(0,0,0,0.04);
+}
+
+.crea-table th, 
+.crea-table td {
+	padding: 12px 15px;
+	text-align: left;
+	border-bottom: 1px solid #f0f0f1;
+	vertical-align: middle;
+}
+
+.crea-table th {
+	font-weight: 600;
+	background: var(--crea-th-bg);
+	color: var(--crea-th-text);
+	border-bottom: 1px solid #c3c4c7;
+}
+
+.crea-table tr:nth-child(odd) { 
+	background-color: var(--crea-tr-odd-bg); 
+	color: var(--crea-tr-odd-text);
+}
+.crea-table tr:nth-child(even) { 
+	background-color: var(--crea-tr-even-bg); 
+	color: var(--crea-tr-even-text);
+}
+
+/**
+ * 4. COMPORTAMIENTO MÓVIL (Tablas Acordeón < 768px)
+ */
+@media screen and (max-width: 767px) {
+	.crea-table { border: 0; background: transparent; box-shadow: none; }
+	.crea-table thead { display: none; }
+	.crea-table tr {
+		display: block; margin-bottom: 15px; background: #fff;
+		border: 1px solid #c3c4c7; border-radius: 8px;
+		box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: relative; cursor: pointer;
+	}
+	.crea-table tr::after {
+		content: "\f140"; font-family: dashicons; position: absolute;
+		top: 15px; right: 15px; font-size: 20px; color: #a7aaad;
+		transition: transform 0.3s ease; pointer-events: none;
+	}
+	.crea-table tr.is-open::after { transform: rotate(180deg); color: var(--crea-primary); }
+	.crea-table td { display: none; padding: 10px 15px; text-align: right; }
+	.crea-table td[data-mobile-role="primary"] {
+		display: block; font-size: 15px; font-weight: 600; color: var(--crea-primary);
+		padding: 15px; padding-right: 40px; text-align: left; border-bottom: 1px solid #eee;
+	}
+	.crea-table td[data-mobile-role="secondary"] {
+		display: block; text-align: left; padding: 0 15px 15px 15px; font-size: 13px; border-bottom: none;
+	}
+	.crea-table tr.is-open td { display: block; border-bottom: 1px solid #f0f0f1; }
+	.crea-table tr.is-open td:last-child { border-bottom: none; background: #f6f7f7; text-align: center; border-radius: 0 0 8px 8px; }
+	.crea-table td::before {
+		content: attr(data-label); float: left; font-weight: 700; color: #646970;
+		text-transform: uppercase; font-size: 10px; margin-top: 4px;
+	}
+	.crea-table td[data-mobile-role="primary"]::before,
+	.crea-table td[data-mobile-role="secondary"]::before { display: none; }
+}

@@ -9,7 +9,7 @@
  *
  * Plugin Name:       CREA - Custom Database Builder
  * Description:       Constructor Relacional de Entornos Analíticos. Plataforma dinámica para la creación de bases de datos y análisis estadístico.
- * Version:           0.0.05
+ * Version:           0.0.07
  * Author:            Juan Carlos De La Cruz Eligio | @enfcarloseligio
  * Text Domain:       crea
  */
@@ -19,14 +19,14 @@ if ( ! defined( 'WPINC' ) ) {
 }
 
 /**
- * ☀️ Definición de constantes globales.
+ * Definición de constantes globales.
  */
-define( 'CREA_VERSION', '0.0.05' );
+define( 'CREA_VERSION', '0.0.07' );
 define( 'CREA_PATH', plugin_dir_path( __FILE__ ) );
 define( 'CREA_URL', plugin_dir_url( __FILE__ ) );
 
 /**
- * ☀️ Lógica de activación segura.
+ * Lógica de activación segura.
  */
 function activate_crea_plugin() {
 	$db_file = CREA_PATH . 'includes/class-crea-db.php';
@@ -51,7 +51,7 @@ function activate_crea_plugin() {
 register_activation_hook( __FILE__, 'activate_crea_plugin' );
 
 /**
- * ☀️ Carga del Orquestador.
+ * Carga del Orquestador.
  */
 $includes_crea = CREA_PATH . 'includes/class-crea.php';
 if ( file_exists( $includes_crea ) ) {

@@ -1,8 +1,6 @@
 <?php
 /**
  * Ruta del archivo: wp-content/plugins/crea/admin/class-crea-admin.php
- *
- * ☀️ Gestión del menú y submenús en el panel de administración.
  */
 
 if ( ! defined( 'WPINC' ) ) {
@@ -17,66 +15,39 @@ class CREA_Admin {
 		$this->plugin_name = $plugin_name;
 	}
 
-	/**
-	 * ☀️ Registra el menú principal y los submenús en la barra lateral.
-	 */
 	public function add_menu() {
-		// Menú Principal (Dashboard)
-		add_menu_page(
-			'CREA Dashboard',
-			'CREA Builder',
-			'manage_options',
-			$this->plugin_name,
-			array( $this, 'display_dashboard' ),
-			'dashicons-database',
-			30
-		);
+		$hook_dashboard = add_menu_page( 'CREA Dashboard', 'CREA Builder', 'manage_options', $this->plugin_name, array( $this, 'display_dashboard' ), 'dashicons-database', 30 );
+		$hook_builder   = add_submenu_page( $this->plugin_name, 'Constructor de Bases', 'Mis Bases', 'manage_options', $this->plugin_name . '-builder', array( $this, 'display_builder' ) );
+		$hook_settings  = add_submenu_page( $this->plugin_name, 'Configuración General', 'Configuración', 'manage_options', $this->plugin_name . '-settings', array( $this, 'display_settings' ) );
 
-		// Submenú: Constructor de Bases
-		add_submenu_page(
-			$this->plugin_name,
-			'Constructor de Bases',
-			'Mis Bases',
-			'manage_options',
-			$this->plugin_name . '-builder',
-			array( $this, 'display_builder' )
-		);
-
-		// Submenú: Configuración
-		add_submenu_page(
-			$this->plugin_name,
-			'Configuración General',
-			'Configuración',
-			'manage_options',
-			$this->plugin_name . '-settings',
-			array( $this, 'display_settings' )
-		);
+		/**
+		 * Registra la carga de recursos estáticos solo en las páginas de CREA.
+		 */
+		add_action( "admin_print_scripts-{$hook_dashboard}", array( $this, 'enqueue_admin_assets' ) );
+		add_action( "admin_print_scripts-{$hook_builder}", array( $this, 'enqueue_admin_assets' ) );
+		add_action( "admin_print_scripts-{$hook_settings}", array( $this, 'enqueue_admin_assets' ) );
 	}
 
 	/**
-	 * ☀️ Renderiza la vista del Dashboard.
+	 * Encola los estilos y scripts globales del área administrativa.
 	 */
+	public function enqueue_admin_assets() {
+		wp_enqueue_style( $this->plugin_name . '-admin-css', CREA_URL . 'admin/assets/css/crea-admin.css', array(), CREA_VERSION, 'all' );
+		wp_enqueue_script( $this->plugin_name . '-admin-js', CREA_URL . 'admin/assets/js/crea-admin.js', array(), CREA_VERSION, true );
+	}
+
 	public function display_dashboard() {
-		echo '<div class="wrap"><h1>CREA - Dashboard Global</h1><p>Aquí mostraremos las estadísticas globales de tus bases de datos.</p></div>';
+		echo '<div class="wrap"><div class="crea-card"><h2>CREA Dashboard</h2><p>Estadísticas globales.</p></div></div>';
 	}
 
-	/**
-	 * ☀️ Renderiza la vista del Constructor (La herramienta principal).
-	 */
 	public function display_builder() {
-		// Llamamos a un archivo externo (partial) para mantener el código limpio.
 		$partial_file = CREA_PATH . 'admin/partials/crea-builder.php';
 		if ( file_exists( $partial_file ) ) {
 			include_once $partial_file;
-		} else {
-			echo '<div class="notice notice-error"><p>Falta el archivo de vista del constructor.</p></div>';
 		}
 	}
 
-	/**
-	 * ☀️ Renderiza la vista de Configuración.
-	 */
 	public function display_settings() {
-		echo '<div class="wrap"><h1>Configuración de CREA</h1><p>Ajustes de exportación y permisos en construcción.</p></div>';
+		echo '<div class="wrap"><div class="crea-card"><h2>Configuración</h2><p>En construcción.</p></div></div>';
 	}
 }

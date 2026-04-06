@@ -2,7 +2,7 @@
 /**
  * Ruta del archivo: wp-content/plugins/crea/includes/class-crea-db.php
  *
- * ☀️ Creación de la infraestructura SQL necesaria.
+ * Creación de la infraestructura SQL necesaria.
  */
 
 if ( ! defined( 'WPINC' ) ) {
@@ -12,7 +12,7 @@ if ( ! defined( 'WPINC' ) ) {
 class CREA_DB {
 
 	/**
-	 * ☀️ Crea las tablas maestras de formularios y campos.
+	 * Crea las tablas maestras de formularios y campos.
 	 */
 	public function create_master_tables() {
 		global $wpdb;

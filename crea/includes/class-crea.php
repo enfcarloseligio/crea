@@ -2,7 +2,7 @@
 /**
  * Ruta del archivo: wp-content/plugins/crea/includes/class-crea.php
  *
- * ☀️ Clase orquestadora que coordina los módulos de administración y frontend.
+ * Clase orquestadora que coordina los módulos de administración y frontend.
  */
 
 if ( ! defined( 'WPINC' ) ) {
@@ -16,7 +16,7 @@ class CREA {
 	}
 
 	/**
-	 * ☀️ Carga de archivos necesarios.
+	 * Carga de archivos necesarios.
 	 */
 	private function load_dependencies() {
 		$admin_file = CREA_PATH . 'admin/class-crea-admin.php';
@@ -26,7 +26,7 @@ class CREA {
 	}
 
 	/**
-	 * ☀️ Registro de hooks principales.
+	 * Registro de hooks principales.
 	 */
 	public function run() {
 		if ( class_exists( 'CREA_Admin' ) ) {
