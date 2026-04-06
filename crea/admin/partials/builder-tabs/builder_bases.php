@@ -2,7 +2,7 @@
 /**
  * Ruta del archivo: wp-content/plugins/crea/admin/partials/builder-tabs/builder_bases.php
  *
- * ☀️ Contenido de la pestaña "Mis Bases".
+ * Contenido de la pestaña "Mis Bases".
  */
 if ( ! defined( 'WPINC' ) ) { die; }
 
@@ -39,7 +39,7 @@ if ( $msg === 'deleted' ) echo '<div class="notice notice-success is-dismissible
 				</tr>
 				<tr>
 					<th scope="row"><label for="form_source">Fuente / Referencia</label></th>
-					<td><input name="form_source" type="text" id="form_source" class="regular-text" placeholder="Ej. SIARHE / Censo Interno" style="width: 100%; max-width: 400px;"></td>
+					<td><textarea name="form_source" id="form_source" rows="3" placeholder="Ej. SIARHE / Censo Interno" style="width: 100%; max-width: 400px;"></textarea></td>
 				</tr>
 				<tr>
 					<th scope="row"><label for="form_comments">Comentarios Internos</label></th>
@@ -61,10 +61,7 @@ if ( $msg === 'deleted' ) echo '<div class="notice notice-success is-dismissible
 		<div class="crea-table-controls">
 			<label style="font-size: 13px;">Mostrar 
 				<select id="crea-items-per-page" style="margin: 0 5px; font-size: 13px;">
-					<option value="25">25</option>
-					<option value="50">50</option>
-					<option value="100">100</option>
-					<option value="all">Todos</option>
+					<option value="25">25</option><option value="50">50</option><option value="100">100</option><option value="all">Todos</option>
 				</select> registros
 			</label>
 		</div>
@@ -78,10 +75,10 @@ if ( $msg === 'deleted' ) echo '<div class="notice notice-success is-dismissible
 	<table id="crea-bases-table" class="crea-table" style="table-layout: fixed; width: 100%; border: none;">
 		<thead>
 			<tr>
-				<th style="width: 6%;">ID</th>
-				<th style="width: 18%;">Nombre Base</th>
-				<th style="width: 14%;">Nombre Sistema</th>
-				<th style="width: 25%;">Auditoría</th>
+				<th style="width: 7%;" class="crea-sortable" data-sort-type="number">ID <span class="dashicons dashicons-sort"></span></th>
+				<th style="width: 18%;" class="crea-sortable" data-sort-type="string">Nombre Base <span class="dashicons dashicons-sort"></span></th>
+				<th style="width: 15%;" class="crea-sortable" data-sort-type="string">Nombre Sistema <span class="dashicons dashicons-sort"></span></th>
+				<th style="width: 23%;" class="crea-sortable" data-sort-type="number">Auditoría <span class="dashicons dashicons-sort"></span></th>
 				<th style="width: 12%;">Tamaño</th>
 				<th style="width: 25%;">Acciones</th>
 			</tr>
@@ -89,9 +86,10 @@ if ( $msg === 'deleted' ) echo '<div class="notice notice-success is-dismissible
 		<tbody>
 			<?php if ( $bases ) : foreach ($bases as $base) : 
 				$id_format = str_pad($base['id'], 2, "0", STR_PAD_LEFT);
-				
 				$created_timestamp = strtotime($base['created_at']);
 				$updated_timestamp = strtotime($base['updated_at']);
+				
+				$sort_timestamp = max($created_timestamp, $updated_timestamp);
 				
 				$created_str = wp_date('d F Y | H:i:s', $created_timestamp);
 				$updated_str = wp_date('d F Y | H:i:s', $updated_timestamp);
@@ -103,14 +101,16 @@ if ( $msg === 'deleted' ) echo '<div class="notice notice-success is-dismissible
 				$editor_name = $editor ? $editor->display_name : 'Usuario Desconocido';
 			?>
 				<tr class="crea-data-row">
-					<td data-label="ID"><strong><?php echo $id_format; ?></strong></td>
-					<td data-label="Nombre Base">
+					<td data-label="ID" data-sort-val="<?php echo $base['id']; ?>"><strong><?php echo $id_format; ?></strong></td>
+					
+					<td data-label="Nombre Base" data-mobile-role="primary" data-sort-val="<?php echo esc_attr($base['form_name']); ?>">
 						<strong><?php echo esc_html($base['form_name']); ?></strong><br>
 						<span style="font-size: 11px; color: #8c8f94;">Año: <?php echo esc_html($base['data_year'] ?: 'N/A'); ?> | Fuente: <?php echo esc_html($base['data_source'] ?: 'N/A'); ?></span>
 					</td>
-					<td data-label="Slug"><code style="background: #f0f0f1;"><?php echo esc_html($base['form_slug']); ?></code></td>
 					
-					<td data-label="Auditoría" style="font-size: 11px; color: #646970;">
+					<td data-label="Slug" data-sort-val="<?php echo esc_attr($base['form_slug']); ?>"><code style="background: #f0f0f1;"><?php echo esc_html($base['form_slug']); ?></code></td>
+					
+					<td data-label="Auditoría" data-sort-val="<?php echo $sort_timestamp; ?>" style="font-size: 11px; color: #646970;">
 						<div style="margin-bottom: 6px;">
 							<span style="color: #8c8f94;">Creado por:</span><br>
 							<strong><?php echo esc_html($author_name); ?></strong><br>
@@ -185,7 +185,7 @@ if ( $msg === 'deleted' ) echo '<div class="notice notice-success is-dismissible
 				</tr>
 				<tr>
 					<th>Fuente / Referencia</th>
-					<td><input type="text" name="edit_source" id="edit_source" class="regular-text"></td>
+					<td><textarea name="edit_source" id="edit_source" rows="3" style="width:100%;"></textarea></td>
 				</tr>
 				<tr>
 					<th>Comentarios Internos</th>
@@ -202,9 +202,9 @@ if ( $msg === 'deleted' ) echo '<div class="notice notice-success is-dismissible
 	</div>
 </div>
 
-<div id="crea-delete-step1" class="crea-modal-overlay crea-modal-warning">
+<div id="crea-delete-step1" class="crea-modal-overlay crea-modal-alert">
 	<div class="crea-modal-content" style="text-align: center;">
-		<span class="dashicons dashicons-warning" style="font-size: 50px; width: 50px; height: 50px; color: #dba617;"></span>
+		<span class="dashicons dashicons-warning" style="font-size: 50px; width: 50px; height: 50px;"></span>
 		<h2>Advertencia de Eliminación</h2>
 		<p style="font-size: 16px;">Estás a punto de borrar la base de datos con todo su conjunto de datos.</p>
 		<div style="background: #f8fafc; padding: 15px; border: 1px solid #c3c4c7; border-radius: 4px; display: inline-block; margin-bottom: 20px;">
@@ -221,7 +221,7 @@ if ( $msg === 'deleted' ) echo '<div class="notice notice-success is-dismissible
 
 <div id="crea-delete-step2" class="crea-modal-overlay crea-modal-danger">
 	<div class="crea-modal-content" style="text-align: center;">
-		<span class="dashicons dashicons-dismiss" style="font-size: 50px; width: 50px; height: 50px; color: #d63638;"></span>
+		<span class="dashicons dashicons-dismiss" style="font-size: 50px; width: 50px; height: 50px;"></span>
 		<h2>Acción Irremediable</h2>
 		<p style="font-size: 16px;">No hay forma de recuperar los datos una vez eliminados.</p>
 		<p>Para proceder, por favor escribe <strong>ELIMINAR</strong> en el siguiente recuadro:</p>
@@ -258,7 +258,7 @@ if ( $msg === 'deleted' ) echo '<div class="notice notice-success is-dismissible
 
 <div id="crea-slug-error-modal" class="crea-modal-overlay crea-modal-warning">
 	<div class="crea-modal-content" style="text-align: center;">
-		<span class="dashicons dashicons-warning" style="font-size: 50px; width: 50px; height: 50px; color: #dba617;"></span>
+		<span class="dashicons dashicons-warning" style="font-size: 50px; width: 50px; height: 50px;"></span>
 		<h2>Identificador Duplicado</h2>
 		<p style="font-size: 16px;">El Identificador Interno <strong id="crea-duplicate-slug-name"></strong> ya existe en el sistema.</p>
 		<p>Por favor, elige un identificador diferente para evitar conflictos en la base de datos.</p>

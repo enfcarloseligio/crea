@@ -11,14 +11,9 @@ class CREA_Admin {
 	public function __construct( $plugin_name ) {
 		$this->plugin_name = $plugin_name;
 		add_action( 'admin_init', array( $this, 'process_form_actions' ) );
-		
-		// Hook AJAX para validar el slug en tiempo real
 		add_action( 'wp_ajax_crea_check_slug', array( $this, 'ajax_check_slug' ) );
 	}
 
-	/**
-	 * Endpoint AJAX para validar que el slug no exista.
-	 */
 	public function ajax_check_slug() {
 		check_ajax_referer( 'crea_ajax_nonce', 'security' );
 		global $wpdb;
@@ -35,21 +30,21 @@ class CREA_Admin {
 	public function process_form_actions() {
 		global $wpdb;
 		$table_forms = $wpdb->prefix . 'crea_forms';
+		$table_audit = $wpdb->prefix . 'crea_audit_log';
 		$current_user_id = get_current_user_id();
 		$current_time = current_time('mysql');
 
-		// ☀️ 1. CREAR BASE (Corregido para soportar fechas vacías)
+		// 1. CREAR BASE
 		if ( isset( $_POST['create_base'] ) && isset( $_POST['crea_save_base_nonce'] ) ) {
 			if ( ! wp_verify_nonce( $_POST['crea_save_base_nonce'], 'crea_save_base_action' ) ) wp_die( 'Error de seguridad.' );
 			
 			$form_slug = str_replace('-', '_', sanitize_title( $_POST['form_slug'] ));
 			
-			// Armamos los datos dinámicamente
 			$data = array(
 				'form_name'   => sanitize_text_field( $_POST['form_name'] ),
 				'form_slug'   => $form_slug,
 				'data_year'   => sanitize_text_field( $_POST['form_year'] ),
-				'data_source' => sanitize_text_field( $_POST['form_source'] ),
+				'data_source' => sanitize_textarea_field( $_POST['form_source'] ), // ☀️ Cambiado a textarea
 				'description' => sanitize_textarea_field( $_POST['form_comments'] ),
 				'created_by'  => $current_user_id,
 				'updated_by'  => $current_user_id,
@@ -57,23 +52,32 @@ class CREA_Admin {
 				'updated_at'  => $current_time
 			);
 
-			// Solo inyectamos la fecha si no está vacía para evitar errores SQL
 			if ( !empty( $_POST['form_cut_date'] ) ) {
 				$data['cut_date'] = sanitize_text_field( $_POST['form_cut_date'] );
 			}
 
 			$inserted = $wpdb->insert( $table_forms, $data );
 
-			// Verificamos si falló a nivel SQL
 			if ( false === $inserted ) {
-				wp_die( 'Error SQL al crear la base: ' . $wpdb->last_error . '.<br><strong>Solución:</strong> Asegúrate de Desactivar y Reactivar el plugin para que se apliquen las nuevas columnas.' );
+				wp_die( 'Error SQL al crear la base: ' . $wpdb->last_error );
 			}
+
+			$new_id = $wpdb->insert_id;
+
+			// REGISTRO DE AUDITORÍA: Creación
+			$wpdb->insert( $table_audit, array(
+				'form_id'      => $new_id,
+				'action_type'  => 'create',
+				'changes_json' => wp_json_encode($data),
+				'user_id'      => $current_user_id,
+				'created_at'   => $current_time
+			));
 
 			wp_redirect( admin_url( 'admin.php?page=' . $this->plugin_name . '-builder&tab=bases&msg=created' ) );
 			exit;
 		}
 
-		// ☀️ 2. EDITAR METADATOS (Corregido y con auditoría del editor)
+		// 2. EDITAR METADATOS
 		if ( isset( $_POST['edit_base'] ) && isset( $_POST['crea_edit_base_nonce'] ) ) {
 			if ( ! wp_verify_nonce( $_POST['crea_edit_base_nonce'], 'crea_edit_base_action' ) ) wp_die( 'Error de seguridad.' );
 			
@@ -82,16 +86,16 @@ class CREA_Admin {
 			$data = array(
 				'form_name'   => sanitize_text_field( $_POST['edit_name'] ),
 				'data_year'   => sanitize_text_field( $_POST['edit_year'] ),
-				'data_source' => sanitize_text_field( $_POST['edit_source'] ),
+				'data_source' => sanitize_textarea_field( $_POST['edit_source'] ), // ☀️ Cambiado a textarea
 				'description' => sanitize_textarea_field( $_POST['edit_comments'] ),
-				'updated_by'  => $current_user_id, // Se actualiza quién editó
-				'updated_at'  => $current_time     // Se actualiza la hora de edición
+				'updated_by'  => $current_user_id,
+				'updated_at'  => $current_time
 			);
 
 			if ( !empty( $_POST['edit_cut_date'] ) ) {
 				$data['cut_date'] = sanitize_text_field( $_POST['edit_cut_date'] );
 			} else {
-				$data['cut_date'] = null; // Si borró la fecha, guardamos null
+				$data['cut_date'] = null;
 			}
 
 			$updated = $wpdb->update( $table_forms, $data, array( 'id' => $id ) );
@@ -99,6 +103,15 @@ class CREA_Admin {
 			if ( false === $updated ) {
 				wp_die( 'Error SQL al actualizar la base: ' . $wpdb->last_error );
 			}
+
+			// REGISTRO DE AUDITORÍA: Edición
+			$wpdb->insert( $table_audit, array(
+				'form_id'      => $id,
+				'action_type'  => 'update',
+				'changes_json' => wp_json_encode($data),
+				'user_id'      => $current_user_id,
+				'created_at'   => $current_time
+			));
 
 			wp_redirect( admin_url( 'admin.php?page=' . $this->plugin_name . '-builder&tab=bases&msg=updated' ) );
 			exit;
@@ -118,6 +131,15 @@ class CREA_Admin {
 			$wpdb->delete( $table_fields, array( 'form_id' => $id ), array( '%d' ) );
 			$wpdb->delete( $table_forms, array( 'id' => $id ), array( '%d' ) );
 			
+			// REGISTRO DE AUDITORÍA: Eliminación
+			$wpdb->insert( $table_audit, array(
+				'form_id'      => $id,
+				'action_type'  => 'delete',
+				'changes_json' => wp_json_encode(array('deleted_slug' => $slug)),
+				'user_id'      => $current_user_id,
+				'created_at'   => $current_time
+			));
+
 			wp_redirect( admin_url( 'admin.php?page=' . $this->plugin_name . '-builder&tab=bases&msg=deleted' ) );
 			exit;
 		}

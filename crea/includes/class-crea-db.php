@@ -9,7 +9,7 @@ class CREA_DB {
 		global $wpdb;
 		$charset_collate = $wpdb->get_charset_collate();
 
-		// ☀️ Tabla de formularios enriquecida con nuevos metadatos
+		// Tabla de formularios
 		$table_forms = $wpdb->prefix . 'crea_forms';
 		$sql_forms = "CREATE TABLE $table_forms (
 			id mediumint(9) NOT NULL AUTO_INCREMENT,
@@ -17,7 +17,7 @@ class CREA_DB {
 			form_slug varchar(100) NOT NULL,
 			data_year varchar(4) DEFAULT '',
 			cut_date date DEFAULT NULL,
-			data_source varchar(255) DEFAULT '',
+			data_source text DEFAULT '',
 			description text DEFAULT '',
 			created_by bigint(20) unsigned DEFAULT 0,
 			updated_by bigint(20) unsigned DEFAULT 0,
@@ -27,6 +27,7 @@ class CREA_DB {
 			UNIQUE KEY form_slug (form_slug)
 		) $charset_collate;";
 
+		// Tabla de campos
 		$table_fields = $wpdb->prefix . 'crea_fields';
 		$sql_fields = "CREATE TABLE $table_fields (
 			id mediumint(9) NOT NULL AUTO_INCREMENT,
@@ -36,8 +37,21 @@ class CREA_DB {
 			PRIMARY KEY  (id)
 		) $charset_collate;";
 
+		// NUEVA TABLA: Historial de Auditoría
+		$table_audit = $wpdb->prefix . 'crea_audit_log';
+		$sql_audit = "CREATE TABLE $table_audit (
+			id bigint(20) NOT NULL AUTO_INCREMENT,
+			form_id mediumint(9) NOT NULL,
+			action_type varchar(50) NOT NULL,
+			changes_json longtext DEFAULT '',
+			user_id bigint(20) unsigned DEFAULT 0,
+			created_at datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
+			PRIMARY KEY  (id)
+		) $charset_collate;";
+
 		require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
 		dbDelta( $sql_forms );
 		dbDelta( $sql_fields );
+		dbDelta( $sql_audit );
 	}
 }

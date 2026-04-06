@@ -2,7 +2,7 @@
 /**
  * Ruta del archivo: wp-content/plugins/crea/admin/partials/builder-tabs/builder_variables.php
  *
- * ☀️ Contenido de la pestaña "Variables (Columnas)".
+ * Contenido de la pestaña "Variables (Columnas)".
  * Gestiona la asignación de columnas, tipos de datos y reglas a una base de datos existente.
  */
 

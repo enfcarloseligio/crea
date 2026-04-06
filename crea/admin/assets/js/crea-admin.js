@@ -1,7 +1,5 @@
 /**
  * Ruta del archivo: wp-content/plugins/crea/admin/assets/js/crea-admin.js
- *
- * ☀️ Scripts globales para la interfaz administrativa de CREA.
  */
 
 window.CreaAdmin = {
@@ -15,15 +13,10 @@ window.CreaAdmin = {
 
     _handleRowClick: function(e) {
         if (window.innerWidth > 767) return; 
-        if (e.target.closest('button') || e.target.closest('a') || e.target.closest('input') || e.target.closest('select')) {
-            return;
-        }
+        if (e.target.closest('button') || e.target.closest('a') || e.target.closest('input') || e.target.closest('select')) return;
         this.classList.toggle('is-open');
     },
 
-    /**
-     * Lógica Global para Tablas Dinámicas (Búsqueda y Paginación)
-     */
     initDynamicTable: function(tableId, searchInputId, perPageId) {
         const searchInput = document.getElementById(searchInputId);
         const itemsPerPageSelect = document.getElementById(perPageId);
@@ -41,7 +34,11 @@ window.CreaAdmin = {
 
         let currentPage = 1;
         let itemsPerPage = 25;
-        let matchedRows = allRows;
+        let matchedRows = [...allRows];
+
+        // VARIABLES PARA ORDENAMIENTO
+        let currentSortColIndex = -1;
+        let isAscending = true;
 
         function render() {
             const term = searchInput.value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -57,16 +54,67 @@ window.CreaAdmin = {
 
             let totalPages = 1;
             if (itemsPerPage === 'all') {
-                matchedRows.forEach(row => row.style.display = '');
+                matchedRows.forEach(row => {
+                    tbody.appendChild(row); // Reordenar en el DOM
+                    row.style.display = '';
+                });
             } else {
                 totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
                 if (currentPage > totalPages) currentPage = totalPages;
                 const start = (currentPage - 1) * itemsPerPage;
+                
+                // Limpiamos y volvemos a inyectar en el DOM en orden
+                matchedRows.forEach(row => tbody.appendChild(row));
                 matchedRows.slice(start, start + itemsPerPage).forEach(row => row.style.display = '');
             }
 
             updateUI(totalItems, totalPages);
         }
+
+        // LÓGICA DE ORDENAMIENTO AL DAR CLIC EN CABECERAS
+        const headers = document.querySelectorAll(`#${tableId} thead th.crea-sortable`);
+        headers.forEach((th, index) => {
+            th.addEventListener('click', () => {
+                const type = th.getAttribute('data-sort-type');
+                
+                // Determinar dirección
+                if(currentSortColIndex === index) {
+                    isAscending = !isAscending;
+                } else {
+                    currentSortColIndex = index;
+                    isAscending = true;
+                }
+
+                // Actualizar iconos
+                headers.forEach(h => {
+                    const icon = h.querySelector('.dashicons');
+                    if(icon) icon.className = 'dashicons dashicons-sort';
+                });
+                const icon = th.querySelector('.dashicons');
+                if(icon) {
+                    icon.className = isAscending ? 'dashicons dashicons-arrow-up-alt2' : 'dashicons dashicons-arrow-down-alt2';
+                }
+
+                // Ordenar el array principal
+                allRows.sort((a, b) => {
+                    // Cuidado con que la columna ID puede ser la 0 y Nombre Base la 1 dependiendo de la estructura
+                    const cellA = a.cells[index];
+                    const cellB = b.cells[index];
+                    
+                    let valA = cellA.getAttribute('data-sort-val') || cellA.textContent.trim();
+                    let valB = cellB.getAttribute('data-sort-val') || cellB.textContent.trim();
+                    
+                    if(type === 'number') {
+                        return isAscending ? (parseFloat(valA) - parseFloat(valB)) : (parseFloat(valB) - parseFloat(valA));
+                    } else {
+                        return isAscending ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                    }
+                });
+
+                currentPage = 1;
+                render();
+            });
+        });
 
         function updateUI(totalItems, totalPages) {
             if (totalItems === 0) {
@@ -116,9 +164,6 @@ window.CreaAdmin = {
         render();
     },
 
-    /**
-     * Lógica para el Modal de Shortcodes
-     */
     initShortcodeModals: function() {
         const modal = document.getElementById('crea-shortcode-modal');
         if(!modal) return;
@@ -156,11 +201,7 @@ window.CreaAdmin = {
         });
     },
 
-    /**
-     * Lógica de Modales de Edición y Eliminación
-     */
     initActionModals: function() {
-        // --- EDITAR METADATOS ---
         const editModal = document.getElementById('crea-edit-modal');
         document.querySelectorAll('.crea-open-edit').forEach(btn => {
             btn.addEventListener('click', function(e) {
@@ -176,7 +217,6 @@ window.CreaAdmin = {
             });
         });
 
-        // --- ELIMINAR (Flujo de 2 pasos) ---
         const deleteStep1 = document.getElementById('crea-delete-step1');
         const deleteStep2 = document.getElementById('crea-delete-step2');
         const deleteConfirmInput = document.getElementById('crea-confirm-delete-input');
@@ -212,7 +252,6 @@ window.CreaAdmin = {
             });
         }
 
-        // --- CERRAR TODOS LOS MODALES ---
         document.querySelectorAll('.crea-modal-close, .crea-cancel-modal').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.crea-modal-overlay').forEach(m => m.style.display = 'none');
@@ -220,9 +259,6 @@ window.CreaAdmin = {
         });
     },
 
-    /**
-     * Validación AJAX del Slug antes de enviar el formulario de creación
-     */
     initSlugValidation: function() {
         const form = document.getElementById('crea-new-base-form');
         if(!form) return;
@@ -248,16 +284,11 @@ window.CreaAdmin = {
             .then(res => res.json())
             .then(response => {
                 if(response.exists) {
-                    // ☀️ CORRECCIÓN: Usar Modal personalizado en lugar de alert()
                     const errorModal = document.getElementById('crea-slug-error-modal');
                     if (errorModal) {
                         document.getElementById('crea-duplicate-slug-name').innerText = `"${response.sanitized}"`;
                         errorModal.style.display = 'block';
-                    } else {
-                        // Respaldo de seguridad
-                        alert(`⚠️ El Identificador Interno "${response.sanitized}" ya existe en el sistema.\nPor favor, elige uno diferente.`);
                     }
-                    
                     submitBtn.value = originalText;
                     submitBtn.disabled = false;
                 } else {
@@ -271,9 +302,6 @@ window.CreaAdmin = {
     }
 };
 
-/**
- * Inicialización centralizada de todas las funciones al cargar el DOM.
- */
 document.addEventListener('DOMContentLoaded', function() {
     window.CreaAdmin.initMobileTables();
     window.CreaAdmin.initDynamicTable('crea-bases-table', 'crea-search-bases', 'crea-items-per-page');
