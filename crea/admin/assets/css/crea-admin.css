@@ -1,7 +1,7 @@
 /* Ruta: wp-content/plugins/crea/admin/assets/css/crea-admin.css */
 
 /**
- * 1. VARIABLES GLOBALES DEL TEMA
+ * ☀️ 1. VARIABLES GLOBALES DEL TEMA
  */
 :root {
 	--crea-th-bg: #fcfcfc;
@@ -14,7 +14,7 @@
 }
 
 /**
- * 2. CONTENEDORES RESPONSIVOS (Tarjetas al 100%)
+ * ☀️ 2. CONTENEDORES RESPONSIVOS
  */
 .crea-card {
 	background: #fff;
@@ -41,7 +41,7 @@
 }
 
 /**
- * 3. TABLAS GLOBALES CREA
+ * ☀️ 3. TABLAS GLOBALES CREA
  */
 .crea-table {
 	width: 100%;
@@ -66,25 +66,74 @@
 	border-bottom: 1px solid #c3c4c7;
 }
 
-.crea-table tr:nth-child(odd) { 
-	background-color: var(--crea-tr-odd-bg); 
-	color: var(--crea-tr-odd-text);
-}
-.crea-table tr:nth-child(even) { 
-	background-color: var(--crea-tr-even-bg); 
-	color: var(--crea-tr-even-text);
-}
+.crea-table tr:nth-child(odd) { background-color: var(--crea-tr-odd-bg); color: var(--crea-tr-odd-text); }
+.crea-table tr:nth-child(even) { background-color: var(--crea-tr-even-bg); color: var(--crea-tr-even-text); }
+
+/* Estilos de Paginación */
+.crea-page-btn { cursor: pointer; padding: 4px 10px; border: 1px solid #c3c4c7; background: #fff; border-radius: 3px; color: var(--crea-primary); text-decoration: none; font-size: 13px; margin: 0 2px;}
+.crea-page-btn:hover { background: #f0f6fc; border-color: var(--crea-primary); }
+.crea-page-btn.active { background: var(--crea-primary); color: #fff; border-color: var(--crea-primary); pointer-events: none; }
+.crea-page-btn.disabled { opacity: 0.5; pointer-events: none; cursor: default; color: #a7aaad; }
 
 /**
- * 4. COMPORTAMIENTO MÓVIL (Tablas Acordeón < 768px)
+ * ☀️ 4. VENTANA MODAL (Estilo SIARHE adaptado)
+ */
+.crea-modal-overlay {
+	display: none;
+	position: fixed; 
+	z-index: 99999; 
+	left: 0; top: 0; 
+	width: 100%; height: 100%; 
+	overflow: auto; 
+	background-color: rgba(0,0,0,0.6); 
+	backdrop-filter: blur(3px);
+}
+
+.crea-modal-content {
+	background-color: #fff;
+	margin: 5% auto;
+	padding: 25px;
+	border: 1px solid #888;
+	border-radius: 8px;
+	box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+	width: 50%; 
+	max-width: 600px;
+	position: relative;
+}
+
+.crea-modal-close {
+	position: absolute;
+	top: 15px; right: 15px;
+	font-size: 24px;
+	cursor: pointer;
+	color: #8c8f94;
+}
+.crea-modal-close:hover { color: #d63638; }
+
+.crea-shortcode-box {
+	background: #f0f0f1;
+	border: 1px dashed #c3c4c7;
+	padding: 10px;
+	border-radius: 4px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 10px;
+}
+
+.crea-shortcode-box code { font-size: 14px; font-weight: bold; background: transparent; padding: 0; }
+
+/**
+ * ☀️ 5. COMPORTAMIENTO MÓVIL (Tablas Acordeón < 768px)
  */
 @media screen and (max-width: 767px) {
+	.crea-modal-content { width: 90%; margin: 15% auto; }
 	.crea-table { border: 0; background: transparent; box-shadow: none; }
 	.crea-table thead { display: none; }
 	.crea-table tr {
 		display: block; margin-bottom: 15px; background: #fff;
 		border: 1px solid #c3c4c7; border-radius: 8px;
-		box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: relative; cursor: pointer;
+		position: relative; cursor: pointer;
 	}
 	.crea-table tr::after {
 		content: "\f140"; font-family: dashicons; position: absolute;
@@ -97,9 +146,7 @@
 		display: block; font-size: 15px; font-weight: 600; color: var(--crea-primary);
 		padding: 15px; padding-right: 40px; text-align: left; border-bottom: 1px solid #eee;
 	}
-	.crea-table td[data-mobile-role="secondary"] {
-		display: block; text-align: left; padding: 0 15px 15px 15px; font-size: 13px; border-bottom: none;
-	}
+	.crea-table td[data-mobile-role="secondary"] { display: block; text-align: left; padding: 0 15px 15px 15px; font-size: 13px; border-bottom: none; }
 	.crea-table tr.is-open td { display: block; border-bottom: 1px solid #f0f0f1; }
 	.crea-table tr.is-open td:last-child { border-bottom: none; background: #f6f7f7; text-align: center; border-radius: 0 0 8px 8px; }
 	.crea-table td::before {
@@ -108,4 +155,36 @@
 	}
 	.crea-table td[data-mobile-role="primary"]::before,
 	.crea-table td[data-mobile-role="secondary"]::before { display: none; }
+}
+
+/**
+ * ☀️ 6. MEJORAS DE UX Y MODALES
+ */
+/* Corrección del ruido visual en botones con iconos */
+.crea-copy-btn, .crea-icon-btn {
+	display: inline-flex !important;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+}
+.crea-copy-btn .dashicons, .crea-icon-btn .dashicons {
+	margin: 0;
+	line-height: 1;
+}
+
+/* Modales de Alerta (Peligro) */
+.crea-modal-danger .crea-modal-content {
+	border-top: 4px solid #d63638;
+}
+.crea-modal-danger h2 { color: #d63638; }
+
+.crea-modal-warning .crea-modal-content {
+	border-top: 4px solid #dba617;
+}
+
+.crea-input-danger {
+	border: 1px solid #d63638 !important;
+	font-weight: bold;
+	text-align: center;
+	letter-spacing: 2px;
 }

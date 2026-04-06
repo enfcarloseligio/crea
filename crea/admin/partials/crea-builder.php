@@ -2,90 +2,38 @@
 /**
  * Ruta del archivo: wp-content/plugins/crea/admin/partials/crea-builder.php
  *
- * Vista HTML para el Constructor utilizando el layout de tarjetas al 100%.
+ * ☀️ Vista principal que actúa como enrutador de las pestañas del Constructor.
  */
 
 if ( ! defined( 'WPINC' ) ) {
 	die;
 }
+
+// Obtener la pestaña activa desde la URL (por defecto: 'bases')
+$active_tab = isset( $_GET['tab'] ) ? sanitize_file_name( $_GET['tab'] ) : 'bases';
 ?>
 
 <div class="wrap">
-	<h1 class="wp-heading-inline">Constructor de Bases de Datos</h1>
+	<h1 class="wp-heading-inline">Gestor de Bases de Datos</h1>
 	<hr class="wp-header-end">
 
-	<form method="post" action="" id="crea-builder-form">
-		
-		<div class="crea-card">
-			<div class="crea-card-header">
-				<h2>1. Definición de la Estructura</h2>
-			</div>
-			
-			<table class="form-table" role="presentation">
-				<tbody>
-					<tr>
-						<th scope="row"><label for="form_name">Nombre de la Base (Ej. Inventario Quirúrgico)</label></th>
-						<td>
-							<input name="form_name" type="text" id="form_name" class="regular-text" required style="width: 100%; max-width: 400px;">
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><label for="form_slug">Identificador Interno (Slug)</label></th>
-						<td>
-							<input name="form_slug" type="text" id="form_slug" class="regular-text" placeholder="ej_inventario_qx" required style="width: 100%; max-width: 400px;">
-							<p class="description">Se usará como nombre físico en la tabla SQL (letras minúsculas y guiones bajos).</p>
-						</td>
-					</tr>
-				</tbody>
-			</table>
-		</div>
+	<h2 class="nav-tab-wrapper" style="margin-bottom: 20px;">
+		<a href="?page=crea-builder&tab=bases" class="nav-tab <?php echo $active_tab == 'bases' ? 'nav-tab-active' : ''; ?>">Mis Bases</a>
+		<a href="?page=crea-builder&tab=variables" class="nav-tab <?php echo $active_tab == 'variables' ? 'nav-tab-active' : ''; ?>">Variables (Columnas)</a>
+	</h2>
 
-		<div class="crea-card">
-			<div class="crea-card-header">
-				<h2>2. Variables de Captura (Campos)</h2>
-			</div>
-			
-			<table class="crea-table" id="crea-fields-table">
-				<thead>
-					<tr>
-						<th>Orden</th>
-						<th>Nombre de Variable</th>
-						<th>Tipo de Dato</th>
-						<th>Obligatorio</th>
-						<th>Acciones</th>
-					</tr>
-				</thead>
-				<tbody id="crea-fields-container">
-					<tr>
-						<td data-label="Orden" data-mobile-role="secondary">1</td>
-						<td data-label="Variable" data-mobile-role="primary">
-							<input type="text" name="fields[0][label]" value="Fecha de Registro" style="width: 100%;">
-						</td>
-						<td data-label="Tipo" data-mobile-role="secondary">
-							<select name="fields[0][type]" style="width: 100%;">
-								<option value="date">Fecha</option>
-								<option value="text">Texto Corto</option>
-								<option value="number">Numérico</option>
-							</select>
-						</td>
-						<td data-label="Obligatorio" data-mobile-role="secondary">
-							<input type="checkbox" name="fields[0][required]" value="1" checked>
-						</td>
-						<td data-label="Acciones" data-mobile-role="secondary">
-							<button type="button" class="button button-link-delete">Eliminar</button>
-						</td>
-					</tr>
-				</tbody>
-			</table>
+	<?php
+	/**
+	 * ☀️ Inclusión Dinámica del Contenido de la Pestaña
+	 * Busca el archivo correspondiente dentro de la carpeta builder-tabs/
+	 */
+	$tab_file = CREA_PATH . 'admin/partials/builder-tabs/builder_' . $active_tab . '.php';
 
-			<div style="margin-top: 15px;">
-				<button type="button" class="button button-secondary" id="crea-add-field">+ Añadir Nueva Variable</button>
-			</div>
-		</div>
-
-		<div class="crea-card" style="background: #f8fafc; text-align: right;">
-			<input type="submit" name="save_form" class="button button-primary button-large" value="Procesar y Crear Base de Datos SQL">
-		</div>
-
-	</form>
+	if ( file_exists( $tab_file ) ) {
+		include_once $tab_file;
+	} else {
+		// Mensaje de seguridad por si falta el archivo
+		echo '<div class="notice notice-error"><p><strong>Error:</strong> El archivo de vista para esta pestaña no se encuentra disponible en <code>builder-tabs/</code> (<code>' . esc_html( basename( $tab_file ) ) . '</code>).</p></div>';
+	}
+	?>
 </div>

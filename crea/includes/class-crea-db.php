@@ -1,33 +1,32 @@
 <?php
 /**
  * Ruta del archivo: wp-content/plugins/crea/includes/class-crea-db.php
- *
- * Creación de la infraestructura SQL necesaria.
  */
-
-if ( ! defined( 'WPINC' ) ) {
-	die;
-}
+if ( ! defined( 'WPINC' ) ) { die; }
 
 class CREA_DB {
-
-	/**
-	 * Crea las tablas maestras de formularios y campos.
-	 */
 	public function create_master_tables() {
 		global $wpdb;
 		$charset_collate = $wpdb->get_charset_collate();
 
-		// Tabla de formularios
+		// ☀️ Tabla de formularios enriquecida con nuevos metadatos
 		$table_forms = $wpdb->prefix . 'crea_forms';
 		$sql_forms = "CREATE TABLE $table_forms (
 			id mediumint(9) NOT NULL AUTO_INCREMENT,
 			form_name varchar(100) NOT NULL,
 			form_slug varchar(100) NOT NULL,
-			PRIMARY KEY  (id)
+			data_year varchar(4) DEFAULT '',
+			cut_date date DEFAULT NULL,
+			data_source varchar(255) DEFAULT '',
+			description text DEFAULT '',
+			created_by bigint(20) unsigned DEFAULT 0,
+			updated_by bigint(20) unsigned DEFAULT 0,
+			created_at datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
+			updated_at datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
+			PRIMARY KEY  (id),
+			UNIQUE KEY form_slug (form_slug)
 		) $charset_collate;";
 
-		// Tabla de campos
 		$table_fields = $wpdb->prefix . 'crea_fields';
 		$sql_fields = "CREATE TABLE $table_fields (
 			id mediumint(9) NOT NULL AUTO_INCREMENT,
