@@ -30,8 +30,7 @@ class CREA_Admin {
 		$table_audit = $wpdb->prefix . 'crea_audit_log';
 		$current_user_id = get_current_user_id();
 		
-		// ☀️ ESTÁNDAR GLOBAL: Guardar SIEMPRE en UTC Absoluto (GMT 0)
-		$current_time = gmdate('Y-m-d H:i:s');
+		$current_time = gmdate('Y-m-d H:i:s'); // GMT 0
 		
 		$current_wp_user = wp_get_current_user();
 		$user_snapshot = array(
@@ -65,9 +64,27 @@ class CREA_Admin {
 			
 			$new_id = $wpdb->insert_id;
 			
+			// Capturamos la estructura inicial exacta (Vacíos o Llenos)
+			$diff = array();
+			$map = array(
+				'form_name'   => 'Nombre Base',
+				'form_slug'   => 'Nombre Sistema',
+				'data_year'   => 'Año de Datos',
+				'cut_date'    => 'Fecha de Corte',
+				'data_source' => 'Fuente / Referencia',
+				'description' => 'Comentarios'
+			);
+			foreach ($map as $db_key => $human_label) {
+				$val = isset($data[$db_key]) && $data[$db_key] !== '' ? $data[$db_key] : 'Vacío';
+				$diff[$human_label] = array('old' => 'N/A', 'new' => $val);
+			}
+			
+			// Guardamos slug y name en el JSON para el hilo histórico
 			$log_payload = array(
 				'user' => $user_snapshot,
-				'diff' => array( 'Estructura Inicial' => array('old' => 'N/A', 'new' => 'Base Creada Exitosamente') )
+				'base_slug' => $form_slug,
+				'base_name' => $data['form_name'],
+				'diff' => $diff
 			);
 			$wpdb->insert( $table_audit, array(
 				'form_id'      => $new_id,
@@ -123,6 +140,8 @@ class CREA_Admin {
 			if ( $updated !== false && !empty($diff) ) {
 				$log_payload = array(
 					'user' => $user_snapshot,
+					'base_slug' => $old_data['form_slug'],
+					'base_name' => $data['form_name'],
 					'diff' => $diff
 				);
 				$wpdb->insert( $table_audit, array(
@@ -145,6 +164,10 @@ class CREA_Admin {
 			$id = intval( $_POST['delete_id'] );
 			$slug = sanitize_title( $_POST['delete_slug'] );
 			
+			// Recuperamos el nombre antes de borrarla
+			$old_data = $wpdb->get_row( $wpdb->prepare( "SELECT form_name FROM $table_forms WHERE id = %d", $id ), ARRAY_A );
+			$base_name = $old_data ? $old_data['form_name'] : $slug;
+			
 			$physical_table = $wpdb->prefix . "crea_data_" . $slug;
 			$wpdb->query("DROP TABLE IF EXISTS $physical_table");
 			
@@ -154,7 +177,9 @@ class CREA_Admin {
 			
 			$log_payload = array(
 				'user' => $user_snapshot,
-				'diff' => array( 'Acción Crítica' => array('old' => $slug, 'new' => 'Base Eliminada Completamente') )
+				'base_slug' => $slug,
+				'base_name' => $base_name,
+				'diff' => array( 'Estado' => array('old' => 'Base Activa', 'new' => 'Base y datos eliminados completamente') )
 			);
 			$wpdb->insert( $table_audit, array(
 				'form_id'      => $id,
@@ -197,19 +222,29 @@ class CREA_Admin {
 
 	public function enqueue_admin_assets() {
 		wp_enqueue_style( 'wp-color-picker' );
+		
+		// Inyectamos Select2 para los selectores con buscador
+		wp_enqueue_style( 'select2', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css', array(), '4.1.0' );
+		wp_enqueue_script( 'select2', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js', array('jquery'), '4.1.0', true );
+
 		wp_enqueue_style( $this->plugin_name . '-admin-css', CREA_URL . 'admin/assets/css/crea-admin.css', array(), CREA_VERSION, 'all' );
 		
 		$default_admin_colors = [ 'th_bg' => '#F8FAFC', 'th_text' => '#0F172A', 'odd_bg' => '#FFFFFF', 'odd_text' => '#475569', 'even_bg' => '#F1F5F9', 'even_text' => '#475569' ];
 		$admin_colors = wp_parse_args( get_option( 'crea_admin_colors', [] ), $default_admin_colors );
+		
+		// Añadimos corrección visual para que Select2 haga match con los inputs de WordPress
 		$custom_css = "
 			:root {
 				--crea-th-bg: {$admin_colors['th_bg']}; --crea-th-text: {$admin_colors['th_text']};
 				--crea-tr-odd-bg: {$admin_colors['odd_bg']}; --crea-tr-odd-text: {$admin_colors['odd_text']};
 				--crea-tr-even-bg: {$admin_colors['even_bg']}; --crea-tr-even-text: {$admin_colors['even_text']};
 			}
+			.select2-container .select2-selection--single { height: 30px; border-color: #8c8f94; }
+			.select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 30px; color: #2c3338; }
+			.select2-container--default .select2-selection--single .select2-selection__arrow { height: 30px; }
 		";
 		wp_add_inline_style( $this->plugin_name . '-admin-css', $custom_css );
-		wp_enqueue_script( $this->plugin_name . '-admin-js', CREA_URL . 'admin/assets/js/crea-admin.js', array('jquery', 'wp-color-picker'), CREA_VERSION, true );
+		wp_enqueue_script( $this->plugin_name . '-admin-js', CREA_URL . 'admin/assets/js/crea-admin.js', array('jquery', 'wp-color-picker', 'select2'), CREA_VERSION, true );
 		wp_localize_script( $this->plugin_name . '-admin-js', 'crea_ajax_obj', array( 'ajax_url' => admin_url( 'admin-ajax.php' ), 'nonce' => wp_create_nonce( 'crea_ajax_nonce' ) ));
 	}
 

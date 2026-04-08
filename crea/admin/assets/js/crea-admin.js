@@ -1,6 +1,5 @@
 /**
  * Ruta del archivo: wp-content/plugins/crea/admin/assets/js/crea-admin.js
- * * Scripts globales para la interfaz administrativa de CREA.
  */
 
 window.CreaAdmin = {
@@ -171,7 +170,6 @@ window.CreaAdmin = {
                 document.getElementById('modal-base-name').innerText = name;
                 document.getElementById('sc-all').innerText = `[crea_table_a_${id}]`;
                 
-                // ☀️ CORRECCIÓN: Generar dinámicamente el nuevo shortcode de Editor
                 const scEdit = document.getElementById('sc-edit');
                 if (scEdit) scEdit.innerText = `[crea_table_er_${id}]`;
                 
@@ -309,8 +307,9 @@ document.addEventListener('DOMContentLoaded', function() {
     window.CreaAdmin.initSlugValidation();
 });
 
-// Inicialización del Selector de Color Nativo de WordPress
+// Inicialización de herramientas de terceros
 jQuery(document).ready(function($){
+    // Color Picker Nativo
     if ($('.crea-color-field').length) {
         $('.crea-color-field').wpColorPicker({
             change: function(event, ui){
@@ -324,6 +323,16 @@ jQuery(document).ready(function($){
                 if (variable) {
                     document.documentElement.style.setProperty(variable, color);
                 }
+            }
+        });
+    }
+    
+    // Select2 para Dropdowns con Buscador Integrado
+    if ($.fn.select2) {
+        $('.crea-searchable-select').select2({
+            width: '100%',
+            language: {
+                noResults: function() { return "No se encontraron bases"; }
             }
         });
     }

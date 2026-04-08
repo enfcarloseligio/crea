@@ -87,7 +87,7 @@ if ( $msg === 'deleted' ) echo '<div class="notice notice-success is-dismissible
             <?php if ( $bases ) : foreach ($bases as $base) : 
                 $id_format = str_pad($base['id'], 2, "0", STR_PAD_LEFT);
                 
-                // ☀️ ESTÁNDAR GLOBAL: Leer desde UTC y traducir a Zona Horaria Global
+                // ESTÁNDAR GLOBAL: Leer desde UTC y traducir a Zona Horaria Global
                 $global_timezone = wp_timezone();
                 
                 $dt_created = date_create($base['created_at'], new DateTimeZone('UTC'));
