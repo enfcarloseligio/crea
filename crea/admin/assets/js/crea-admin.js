@@ -1,5 +1,6 @@
 /**
  * Ruta del archivo: wp-content/plugins/crea/admin/assets/js/crea-admin.js
+ * * ☀️ Scripts globales para la interfaz administrativa de CREA.
  */
 
 window.CreaAdmin = {
@@ -36,7 +37,6 @@ window.CreaAdmin = {
         let itemsPerPage = 25;
         let matchedRows = [...allRows];
 
-        // VARIABLES PARA ORDENAMIENTO
         let currentSortColIndex = -1;
         let isAscending = true;
 
@@ -55,7 +55,7 @@ window.CreaAdmin = {
             let totalPages = 1;
             if (itemsPerPage === 'all') {
                 matchedRows.forEach(row => {
-                    tbody.appendChild(row); // Reordenar en el DOM
+                    tbody.appendChild(row);
                     row.style.display = '';
                 });
             } else {
@@ -63,7 +63,6 @@ window.CreaAdmin = {
                 if (currentPage > totalPages) currentPage = totalPages;
                 const start = (currentPage - 1) * itemsPerPage;
                 
-                // Limpiamos y volvemos a inyectar en el DOM en orden
                 matchedRows.forEach(row => tbody.appendChild(row));
                 matchedRows.slice(start, start + itemsPerPage).forEach(row => row.style.display = '');
             }
@@ -71,13 +70,11 @@ window.CreaAdmin = {
             updateUI(totalItems, totalPages);
         }
 
-        // LÓGICA DE ORDENAMIENTO AL DAR CLIC EN CABECERAS
         const headers = document.querySelectorAll(`#${tableId} thead th.crea-sortable`);
         headers.forEach((th, index) => {
             th.addEventListener('click', () => {
                 const type = th.getAttribute('data-sort-type');
                 
-                // Determinar dirección
                 if(currentSortColIndex === index) {
                     isAscending = !isAscending;
                 } else {
@@ -85,7 +82,6 @@ window.CreaAdmin = {
                     isAscending = true;
                 }
 
-                // Actualizar iconos
                 headers.forEach(h => {
                     const icon = h.querySelector('.dashicons');
                     if(icon) icon.className = 'dashicons dashicons-sort';
@@ -95,9 +91,7 @@ window.CreaAdmin = {
                     icon.className = isAscending ? 'dashicons dashicons-arrow-up-alt2' : 'dashicons dashicons-arrow-down-alt2';
                 }
 
-                // Ordenar el array principal
                 allRows.sort((a, b) => {
-                    // Cuidado con que la columna ID puede ser la 0 y Nombre Base la 1 dependiendo de la estructura
                     const cellA = a.cells[index];
                     const cellB = b.cells[index];
                     
@@ -176,6 +170,11 @@ window.CreaAdmin = {
                 
                 document.getElementById('modal-base-name').innerText = name;
                 document.getElementById('sc-all').innerText = `[crea_table_a_${id}]`;
+                
+                // ☀️ CORRECCIÓN: Generar dinámicamente el nuevo shortcode de Editor
+                const scEdit = document.getElementById('sc-edit');
+                if (scEdit) scEdit.innerText = `[crea_table_er_${id}]`;
+                
                 document.getElementById('sc-add').innerText = `[crea_table_ar_${id}]`;
                 document.getElementById('sc-view').innerText = `[crea_table_vr_${id}]`;
                 
@@ -308,4 +307,24 @@ document.addEventListener('DOMContentLoaded', function() {
     window.CreaAdmin.initShortcodeModals();
     window.CreaAdmin.initActionModals();
     window.CreaAdmin.initSlugValidation();
+});
+
+// Inicialización del Selector de Color Nativo de WordPress
+jQuery(document).ready(function($){
+    if ($('.crea-color-field').length) {
+        $('.crea-color-field').wpColorPicker({
+            change: function(event, ui){
+                var element = event.target;
+                var color = ui.color.toString();
+                
+                element.value = color;
+                element.dispatchEvent(new Event('change', { bubbles: true }));
+
+                var variable = $(element).data('variable');
+                if (variable) {
+                    document.documentElement.style.setProperty(variable, color);
+                }
+            }
+        });
+    }
 });

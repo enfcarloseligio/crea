@@ -44,7 +44,7 @@ class CREA_Admin {
 				'form_name'   => sanitize_text_field( $_POST['form_name'] ),
 				'form_slug'   => $form_slug,
 				'data_year'   => sanitize_text_field( $_POST['form_year'] ),
-				'data_source' => sanitize_textarea_field( $_POST['form_source'] ), // ☀️ Cambiado a textarea
+				'data_source' => sanitize_textarea_field( $_POST['form_source'] ),
 				'description' => sanitize_textarea_field( $_POST['form_comments'] ),
 				'created_by'  => $current_user_id,
 				'updated_by'  => $current_user_id,
@@ -57,14 +57,9 @@ class CREA_Admin {
 			}
 
 			$inserted = $wpdb->insert( $table_forms, $data );
-
-			if ( false === $inserted ) {
-				wp_die( 'Error SQL al crear la base: ' . $wpdb->last_error );
-			}
-
+			if ( false === $inserted ) wp_die( 'Error SQL al crear la base: ' . $wpdb->last_error );
+			
 			$new_id = $wpdb->insert_id;
-
-			// REGISTRO DE AUDITORÍA: Creación
 			$wpdb->insert( $table_audit, array(
 				'form_id'      => $new_id,
 				'action_type'  => 'create',
@@ -86,7 +81,7 @@ class CREA_Admin {
 			$data = array(
 				'form_name'   => sanitize_text_field( $_POST['edit_name'] ),
 				'data_year'   => sanitize_text_field( $_POST['edit_year'] ),
-				'data_source' => sanitize_textarea_field( $_POST['edit_source'] ), // ☀️ Cambiado a textarea
+				'data_source' => sanitize_textarea_field( $_POST['edit_source'] ),
 				'description' => sanitize_textarea_field( $_POST['edit_comments'] ),
 				'updated_by'  => $current_user_id,
 				'updated_at'  => $current_time
@@ -99,12 +94,8 @@ class CREA_Admin {
 			}
 
 			$updated = $wpdb->update( $table_forms, $data, array( 'id' => $id ) );
+			if ( false === $updated ) wp_die( 'Error SQL al actualizar la base: ' . $wpdb->last_error );
 
-			if ( false === $updated ) {
-				wp_die( 'Error SQL al actualizar la base: ' . $wpdb->last_error );
-			}
-
-			// REGISTRO DE AUDITORÍA: Edición
 			$wpdb->insert( $table_audit, array(
 				'form_id'      => $id,
 				'action_type'  => 'update',
@@ -131,7 +122,6 @@ class CREA_Admin {
 			$wpdb->delete( $table_fields, array( 'form_id' => $id ), array( '%d' ) );
 			$wpdb->delete( $table_forms, array( 'id' => $id ), array( '%d' ) );
 			
-			// REGISTRO DE AUDITORÍA: Eliminación
 			$wpdb->insert( $table_audit, array(
 				'form_id'      => $id,
 				'action_type'  => 'delete',
@@ -141,6 +131,32 @@ class CREA_Admin {
 			));
 
 			wp_redirect( admin_url( 'admin.php?page=' . $this->plugin_name . '-builder&tab=bases&msg=deleted' ) );
+			exit;
+		}
+
+		// 4. GUARDAR APARIENCIA (TEMA)
+		if ( isset( $_POST['crea_save_appearance'] ) && isset( $_POST['crea_save_appearance_nonce'] ) ) {
+			if ( ! wp_verify_nonce( $_POST['crea_save_appearance_nonce'], 'crea_save_appearance_action' ) ) wp_die( 'Error de seguridad.' );
+
+			$admin_colors = array(
+				'th_bg'       => sanitize_hex_color( $_POST['admin_th_bg'] ),
+				'th_text'     => sanitize_hex_color( $_POST['admin_th_text'] ),
+				'odd_bg'      => sanitize_hex_color( $_POST['admin_odd_bg'] ),
+				'odd_text'    => sanitize_hex_color( $_POST['admin_odd_text'] ),
+				'even_bg'     => sanitize_hex_color( $_POST['admin_even_bg'] ),
+				'even_text'   => sanitize_hex_color( $_POST['admin_even_text'] ),
+			);
+
+			$front_colors = array(
+				'primary'     => sanitize_hex_color( $_POST['front_primary'] ),
+				'th_bg'       => sanitize_hex_color( $_POST['front_th_bg'] ),
+				'th_text'     => sanitize_hex_color( $_POST['front_th_text'] ),
+			);
+
+			update_option( 'crea_admin_colors', $admin_colors );
+			update_option( 'crea_front_colors', $front_colors );
+
+			wp_redirect( admin_url( 'admin.php?page=' . $this->plugin_name . '-settings&tab=apariencia&msg=appearance_saved' ) );
 			exit;
 		}
 	}
@@ -156,8 +172,34 @@ class CREA_Admin {
 	}
 
 	public function enqueue_admin_assets() {
+		wp_enqueue_style( 'wp-color-picker' );
 		wp_enqueue_style( $this->plugin_name . '-admin-css', CREA_URL . 'admin/assets/css/crea-admin.css', array(), CREA_VERSION, 'all' );
-		wp_enqueue_script( $this->plugin_name . '-admin-js', CREA_URL . 'admin/assets/js/crea-admin.js', array(), CREA_VERSION, true );
+		
+		// INYECCIÓN DE CSS DINÁMICO DESDE LA BASE DE DATOS
+		$default_admin_colors = [
+			'th_bg'       => '#F8FAFC',
+			'th_text'     => '#0F172A',
+			'odd_bg'      => '#FFFFFF',
+			'odd_text'    => '#475569',
+			'even_bg'     => '#F1F5F9',
+			'even_text'   => '#475569',
+		];
+		$admin_colors = wp_parse_args( get_option( 'crea_admin_colors', [] ), $default_admin_colors );
+
+		// Sobrescribimos las variables de :root globales para todo el plugin
+		$custom_css = "
+			:root {
+				--crea-th-bg: {$admin_colors['th_bg']};
+				--crea-th-text: {$admin_colors['th_text']};
+				--crea-tr-odd-bg: {$admin_colors['odd_bg']};
+				--crea-tr-odd-text: {$admin_colors['odd_text']};
+				--crea-tr-even-bg: {$admin_colors['even_bg']};
+				--crea-tr-even-text: {$admin_colors['even_text']};
+			}
+		";
+		wp_add_inline_style( $this->plugin_name . '-admin-css', $custom_css );
+
+		wp_enqueue_script( $this->plugin_name . '-admin-js', CREA_URL . 'admin/assets/js/crea-admin.js', array('jquery', 'wp-color-picker'), CREA_VERSION, true );
 		
 		wp_localize_script( $this->plugin_name . '-admin-js', 'crea_ajax_obj', array(
 			'ajax_url' => admin_url( 'admin-ajax.php' ),
@@ -167,5 +209,8 @@ class CREA_Admin {
 
 	public function display_dashboard() { echo '<div class="wrap"><h2>Dashboard</h2></div>'; }
 	public function display_builder() { include_once CREA_PATH . 'admin/partials/crea-builder.php'; }
-	public function display_settings() { echo '<div class="wrap"><h2>Configuración</h2></div>'; }
+	public function display_settings() { 
+		$partial_file = CREA_PATH . 'admin/partials/crea-settings.php';
+		if ( file_exists( $partial_file ) ) include_once $partial_file;
+	}
 }

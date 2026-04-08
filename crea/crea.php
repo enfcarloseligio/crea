@@ -9,7 +9,7 @@
  *
  * Plugin Name:       CREA - Custom Database Builder
  * Description:       Constructor Relacional de Entornos Analíticos. Plataforma dinámica para la creación de bases de datos y análisis estadístico.
- * Version:           0.0.20
+ * Version:           0.0.31
  * Author:            Juan Carlos De La Cruz Eligio | @enfcarloseligio
  * Text Domain:       crea
  */
@@ -21,7 +21,7 @@ if ( ! defined( 'WPINC' ) ) {
 /**
  * Definición de constantes globales.
  */
-define( 'CREA_VERSION', '0.0.20' );
+define( 'CREA_VERSION', '0.0.31' );
 define( 'CREA_PATH', plugin_dir_path( __FILE__ ) );
 define( 'CREA_URL', plugin_dir_url( __FILE__ ) );
 

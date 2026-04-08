@@ -1,9 +1,11 @@
 /* Ruta: wp-content/plugins/crea/admin/assets/css/crea-admin.css */
 
 /**
- * 1. VARIABLES GLOBALES DEL TEMA
+ * ☀️ 1. VARIABLES GLOBALES DEL TEMA (Identidad Visual: Salud Digital)
  */
 :root {
+	--crea-ink: #0F172A;          
+	
 	--crea-th-bg: #F8FAFC;
 	--crea-th-text: #0F172A;
 	--crea-tr-odd-bg: #FFFFFF;
@@ -17,7 +19,7 @@
 }
 
 /**
- * 2. CONTENEDORES RESPONSIVOS
+ * ☀️ 2. CONTENEDORES RESPONSIVOS
  */
 .crea-card {
 	background: #fff;
@@ -41,11 +43,11 @@
 	padding: 0;
 	font-size: 1.3em;
 	font-weight: 600;
-	color: var(--crea-th-text);
+	color: var(--crea-ink); 
 }
 
 /**
- * 3. TABLAS GLOBALES CREA
+ * ☀️ 3. TABLAS GLOBALES CREA
  */
 .crea-table {
 	width: 100%;
@@ -74,9 +76,26 @@
 .crea-table tr:nth-child(even) { background-color: var(--crea-tr-even-bg); color: var(--crea-tr-even-text); }
 
 /* Estilos de Ordenamiento en Cabeceras */
-.crea-sortable { cursor: pointer; transition: background 0.2s; user-select: none; }
-.crea-sortable:hover { background: #E2E8F0; }
-.crea-sortable .dashicons { font-size: 16px; width: 16px; height: 16px; color: #A5B4C3; margin-top: 2px; }
+.crea-sortable { 
+	cursor: pointer; 
+	transition: all 0.2s ease; 
+	user-select: none; 
+}
+.crea-sortable:hover { 
+	box-shadow: inset 0 0 0 999px rgba(128, 128, 128, 0.15); 
+}
+.crea-sortable .dashicons { 
+	font-size: 16px; 
+	width: 16px; 
+	height: 16px; 
+	color: inherit; 
+	opacity: 0.5; 
+	margin-top: 2px; 
+	transition: opacity 0.2s; 
+}
+.crea-sortable:hover .dashicons { 
+	opacity: 0.9; 
+}
 
 /* Estilos de Paginación */
 .crea-page-btn {
@@ -96,7 +115,7 @@
 .crea-page-btn.disabled { opacity: 0.5; pointer-events: none; cursor: default; color: #A5B4C3; }
 
 /**
- * 4. VENTANAS MODALES
+ * ☀️ 4. VENTANAS MODALES
  */
 .crea-modal-overlay {
 	display: none;
@@ -110,10 +129,11 @@
 }
 
 .crea-modal-content {
-	background-color: var(--crea-tr-odd-bg);
+	background-color: #ffffff;
+	color: #0F172A;
 	margin: 5% auto;
 	padding: 25px;
-	border: 1px solid var(--crea-th-text);
+	border: 1px solid #cbd5e1;
 	border-radius: 14px;
 	box-shadow: 0 10px 30px rgba(15, 23, 42, 0.2);
 	width: 50%; 
@@ -132,13 +152,13 @@
 	top: 15px; right: 15px;
 	font-size: 24px;
 	cursor: pointer;
-	color: var(--crea-tr-odd-text);
+	color: #64748b;
 	transition: color 0.2s;
 }
 .crea-modal-close:hover { color: var(--crea-danger); }
 
 /**
- * 5. COLORES DE ALERTA (Modales Específicos)
+ * ☀️ 5. COLORES DE ALERTA (Modales Específicos)
  */
 .crea-modal-danger .crea-modal-content { border-top: 5px solid var(--crea-danger); }
 .crea-modal-danger h2, .crea-modal-danger .dashicons-dismiss { color: var(--crea-danger); }
@@ -148,7 +168,6 @@
 .crea-modal-warning h2, .crea-modal-warning .dashicons-warning,
 .crea-modal-alert h2, .crea-modal-alert .dashicons-warning { color: var(--crea-warning); }
 
-/* Input de confirmación ELIMINAR */
 input.regular-text.crea-input-danger { 
 	border: 2px solid var(--crea-danger); 
 	font-weight: bold; 
@@ -162,10 +181,10 @@ input.regular-text.crea-input-danger:focus {
 }
 
 /**
- * 6. UTILIDADES Y SHORTCODES
+ * ☀️ 6. UTILIDADES Y SHORTCODES
  */
 .crea-shortcode-box {
-	background: var(--crea-tr-even-bg);
+	background-color: #f1f5f9; 
 	border: 1px dashed #cbd5e1;
 	padding: 10px;
 	border-radius: 4px;
@@ -174,9 +193,14 @@ input.regular-text.crea-input-danger:focus {
 	align-items: center;
 	margin-bottom: 10px;
 }
-.crea-shortcode-box code { font-size: 14px; font-weight: bold; background: transparent; padding: 0; }
+.crea-shortcode-box code { 
+	font-size: 14px; 
+	font-weight: bold; 
+	background: transparent; 
+	padding: 0; 
+	color: #0F172A; 
+}
 
-/* Corrección del ruido visual en botones con iconos (Usando especificidad) */
 .button.crea-copy-btn, .button.crea-icon-btn {
 	display: inline-flex;
 	align-items: center;
@@ -186,7 +210,7 @@ input.regular-text.crea-input-danger:focus {
 .button.crea-copy-btn .dashicons, .button.crea-icon-btn .dashicons { margin: 0; line-height: 1; }
 
 /**
- * 7. COMPORTAMIENTO MÓVIL HIPER-OPTIMIZADO (< 768px)
+ * ☀️ 7. COMPORTAMIENTO MÓVIL HIPER-OPTIMIZADO (< 768px)
  */
 @media screen and (max-width: 767px) {
 	.crea-modal-content { width: 90%; margin: 15% auto; }
@@ -197,8 +221,8 @@ input.regular-text.crea-input-danger:focus {
 		display: flex;
 		flex-direction: column;
 		margin-bottom: 15px; 
-		background: #fff;
-		border: 1px solid #E2E8F0; 
+		/* Hereda el fondo dinámico de odd/even */
+		border: 1px solid rgba(128, 128, 128, 0.2); 
 		border-radius: 8px;
 		position: relative; 
 		cursor: pointer;
@@ -207,10 +231,15 @@ input.regular-text.crea-input-danger:focus {
 	
 	.crea-table tr::after {
 		content: "\f140"; font-family: dashicons; position: absolute;
-		top: 15px; right: 15px; font-size: 20px; color: #A5B4C3;
+		top: 15px; right: 15px; font-size: 20px; 
+		color: inherit; /* Hereda dinámicamente */
+		opacity: 0.5; /* Atenuado */
 		transition: transform 0.3s ease; pointer-events: none;
 	}
-	.crea-table tr.is-open::after { transform: rotate(180deg); color: var(--crea-primary); }
+	.crea-table tr.is-open::after { 
+		transform: rotate(180deg); 
+		opacity: 1; 
+	}
 	
 	.crea-table td {
 		display: none; 
@@ -222,18 +251,19 @@ input.regular-text.crea-input-danger:focus {
 		display: block;
 		order: -1; 
 		font-size: 15px; 
-		color: var(--crea-primary);
+		font-weight: 600; /* Destacado con negrita en vez de forzar color azul */
+		color: inherit; /* Hereda el texto claro u oscuro según el fondo */
 		padding: 15px 45px 15px 15px;
-		border-bottom: 1px solid #F1F5F9;
+		border-bottom: 1px solid rgba(128, 128, 128, 0.15); /* Borde adaptable */
 	}
 	
 	.crea-table tr.is-open td { 
 		display: block; 
-		border-bottom: 1px solid #F1F5F9; 
+		border-bottom: 1px solid rgba(128, 128, 128, 0.15); /* Borde adaptable */
 	}
 	.crea-table tr.is-open td:last-child { 
 		border-bottom: none; 
-		background: var(--crea-th-bg); 
+		background: rgba(128, 128, 128, 0.05); /* Oscurecimiento sutil que funciona en claro y oscuro */
 		border-radius: 0 0 8px 8px; 
 	}
 	
@@ -241,11 +271,11 @@ input.regular-text.crea-input-danger:focus {
 		content: attr(data-label); 
 		display: block; 
 		font-weight: 700; 
-		color: var(--crea-tr-odd-text);
+		color: inherit; /* Hereda dinámicamente */
 		text-transform: uppercase; 
 		font-size: 10px; 
 		margin-bottom: 6px; 
-		opacity: 0.8;
+		opacity: 0.6; /* Etiquetas atenuadas */
 		letter-spacing: 0.5px;
 	}
 	
