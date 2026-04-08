@@ -2,7 +2,7 @@
 /**
  * Ruta del archivo: wp-content/plugins/crea/admin/partials/builder-tabs/builder_bases.php
  *
- * ☀️ Contenido de la pestaña "Mis Bases" (Versión Optimizada con Roles y Comentarios).
+ * Contenido de la pestaña "Mis Bases" (Versión Optimizada con Roles y Comentarios).
  */
 if ( ! defined( 'WPINC' ) ) { die; }
 

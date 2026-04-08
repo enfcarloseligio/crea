@@ -2,17 +2,17 @@
 /**
  * Ruta del archivo: wp-content/plugins/crea/admin/partials/settings-tabs/settings_apariencia.php
  *
- * ☀️ Pestaña de Apariencia: Selector nativo de colores y vista previa en vivo.
+ * Pestaña de Apariencia: Selector nativo de colores y vista previa en vivo.
  */
 if ( ! defined( 'WPINC' ) ) { die; }
 
-// ☀️ Notificación de éxito al guardar
+// Notificación de éxito al guardar
 $msg = isset($_GET['msg']) ? sanitize_text_field($_GET['msg']) : '';
 if ( $msg === 'appearance_saved' ) {
 	echo '<div class="notice notice-success is-dismissible"><p><span class="dashicons dashicons-yes-alt"></span> Ajustes de apariencia guardados correctamente.</p></div>';
 }
 
-// ☀️ Obtención real de colores desde la base de datos con Valores por Defecto
+// Obtención real de colores desde la base de datos con Valores por Defecto
 $default_admin_colors = [
 	'th_bg'       => '#F8FAFC',
 	'th_text'     => '#0F172A',
@@ -38,7 +38,7 @@ $front_colors = wp_parse_args( get_option( 'crea_front_colors', [] ), $default_f
 	@media screen and (max-width: 767px) {
 		.crea-tema-flex { flex-direction: column; gap: 15px; }
 		
-		/* ☀️ Elevamos la especificidad uniendo ID y Clase para anular el CSS global sin usar !important */
+		/* Elevamos la especificidad uniendo ID y Clase para anular el CSS global sin usar !important */
 		#crea-preview-table.crea-table {
 			display: table;
 			border: 1px solid #c3c4c7;

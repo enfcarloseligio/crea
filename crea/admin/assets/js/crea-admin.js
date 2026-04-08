@@ -1,6 +1,6 @@
 /**
  * Ruta del archivo: wp-content/plugins/crea/admin/assets/js/crea-admin.js
- * * ☀️ Scripts globales para la interfaz administrativa de CREA.
+ * * Scripts globales para la interfaz administrativa de CREA.
  */
 
 window.CreaAdmin = {

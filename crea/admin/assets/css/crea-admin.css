@@ -1,7 +1,7 @@
 /* Ruta: wp-content/plugins/crea/admin/assets/css/crea-admin.css */
 
 /**
- * ☀️ 1. VARIABLES GLOBALES DEL TEMA (Identidad Visual: Salud Digital)
+ * 1. VARIABLES GLOBALES DEL TEMA (Identidad Visual: Salud Digital)
  */
 :root {
 	--crea-ink: #0F172A;          
@@ -19,7 +19,7 @@
 }
 
 /**
- * ☀️ 2. CONTENEDORES RESPONSIVOS
+ * 2. CONTENEDORES RESPONSIVOS
  */
 .crea-card {
 	background: #fff;
@@ -47,7 +47,7 @@
 }
 
 /**
- * ☀️ 3. TABLAS GLOBALES CREA
+ * 3. TABLAS GLOBALES CREA
  */
 .crea-table {
 	width: 100%;
@@ -115,7 +115,7 @@
 .crea-page-btn.disabled { opacity: 0.5; pointer-events: none; cursor: default; color: #A5B4C3; }
 
 /**
- * ☀️ 4. VENTANAS MODALES
+ * 4. VENTANAS MODALES
  */
 .crea-modal-overlay {
 	display: none;
@@ -158,7 +158,7 @@
 .crea-modal-close:hover { color: var(--crea-danger); }
 
 /**
- * ☀️ 5. COLORES DE ALERTA (Modales Específicos)
+ * 5. COLORES DE ALERTA (Modales Específicos)
  */
 .crea-modal-danger .crea-modal-content { border-top: 5px solid var(--crea-danger); }
 .crea-modal-danger h2, .crea-modal-danger .dashicons-dismiss { color: var(--crea-danger); }
@@ -181,7 +181,7 @@ input.regular-text.crea-input-danger:focus {
 }
 
 /**
- * ☀️ 6. UTILIDADES Y SHORTCODES
+ * 6. UTILIDADES Y SHORTCODES
  */
 .crea-shortcode-box {
 	background-color: #f1f5f9; 
@@ -210,7 +210,7 @@ input.regular-text.crea-input-danger:focus {
 .button.crea-copy-btn .dashicons, .button.crea-icon-btn .dashicons { margin: 0; line-height: 1; }
 
 /**
- * ☀️ 7. COMPORTAMIENTO MÓVIL HIPER-OPTIMIZADO (< 768px)
+ * 7. COMPORTAMIENTO MÓVIL HIPER-OPTIMIZADO (< 768px)
  */
 @media screen and (max-width: 767px) {
 	.crea-modal-content { width: 90%; margin: 15% auto; }
