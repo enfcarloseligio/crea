@@ -29,9 +29,10 @@ class CREA_Admin {
 		$table_forms = $wpdb->prefix . 'crea_forms';
 		$table_audit = $wpdb->prefix . 'crea_audit_log';
 		$current_user_id = get_current_user_id();
-		$current_time = current_time('mysql');
 		
-		// ☀️ Función auxiliar para la fotografía del usuario (Inmutable)
+		// ☀️ ESTÁNDAR GLOBAL: Guardar SIEMPRE en UTC Absoluto (GMT 0)
+		$current_time = gmdate('Y-m-d H:i:s');
+		
 		$current_wp_user = wp_get_current_user();
 		$user_snapshot = array(
 			'ID'       => $current_wp_user->ID,
@@ -64,7 +65,6 @@ class CREA_Admin {
 			
 			$new_id = $wpdb->insert_id;
 			
-			// Auditoría: Creación
 			$log_payload = array(
 				'user' => $user_snapshot,
 				'diff' => array( 'Estructura Inicial' => array('old' => 'N/A', 'new' => 'Base Creada Exitosamente') )
@@ -98,7 +98,6 @@ class CREA_Admin {
 			);
 			$data['cut_date'] = !empty( $_POST['edit_cut_date'] ) ? sanitize_text_field( $_POST['edit_cut_date'] ) : null;
 
-			// ☀️ Auditoría: Calcular Diferencias Exactas (Diff)
 			$diff = array();
 			$map = array(
 				'form_name'   => 'Nombre Base',
@@ -121,7 +120,6 @@ class CREA_Admin {
 
 			$updated = $wpdb->update( $table_forms, $data, array( 'id' => $id ) );
 
-			// Solo registramos auditoría si realmente cambió algo
 			if ( $updated !== false && !empty($diff) ) {
 				$log_payload = array(
 					'user' => $user_snapshot,
@@ -154,7 +152,6 @@ class CREA_Admin {
 			$wpdb->delete( $table_fields, array( 'form_id' => $id ), array( '%d' ) );
 			$wpdb->delete( $table_forms, array( 'id' => $id ), array( '%d' ) );
 			
-			// Auditoría: Eliminación (Se registra con ID huérfano para historial global)
 			$log_payload = array(
 				'user' => $user_snapshot,
 				'diff' => array( 'Acción Crítica' => array('old' => $slug, 'new' => 'Base Eliminada Completamente') )
