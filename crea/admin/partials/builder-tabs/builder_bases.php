@@ -86,13 +86,17 @@ if ( $msg === 'deleted' ) echo '<div class="notice notice-success is-dismissible
         <tbody>
             <?php if ( $bases ) : foreach ($bases as $base) : 
                 $id_format = str_pad($base['id'], 2, "0", STR_PAD_LEFT);
-                $created_timestamp = strtotime($base['created_at']);
-                $updated_timestamp = strtotime($base['updated_at']);
+                
+                // ☀️ ÚNICO CAMBIO: Le decimos a PHP que la fecha de la DB YA está en la zona horaria de WP
+                $timezone = wp_timezone();
+                $created_timestamp = date_create($base['created_at'], $timezone)->getTimestamp();
+                $updated_timestamp = date_create($base['updated_at'], $timezone)->getTimestamp();
                 $sort_timestamp = max($created_timestamp, $updated_timestamp);
                 
                 $created_str = wp_date('d F Y | H:i:s', $created_timestamp);
                 $updated_str = wp_date('d F Y | H:i:s', $updated_timestamp);
-                $cut_date_str = !empty($base['cut_date']) ? wp_date('d M Y', strtotime($base['cut_date'])) : 'N/A';
+                $cut_date_str = !empty($base['cut_date']) ? wp_date('d M Y', date_create($base['cut_date'], $timezone)->getTimestamp()) : 'N/A';
+                // ☀️ FIN DEL CAMBIO
                 
                 $author = get_userdata($base['created_by']);
                 $author_name = $author ? $author->display_name : 'Usuario Desconocido';
