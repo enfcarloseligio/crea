@@ -1,8 +1,6 @@
 <?php
 /**
  * Ruta del archivo: wp-content/plugins/crea/admin/partials/builder-tabs/builder_bases.php
- *
- * Contenido de la pestaña "Mis Bases" (Versión Optimizada con Roles y Comentarios).
  */
 if ( ! defined( 'WPINC' ) ) { die; }
 
@@ -44,6 +42,15 @@ if ( $msg === 'deleted' ) echo '<div class="notice notice-success is-dismissible
                 <tr>
                     <th scope="row"><label for="form_comments">Comentarios Internos</label></th>
                     <td><textarea name="form_comments" id="form_comments" rows="3" style="width: 100%; max-width: 400px;"></textarea></td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="audit_records">Auditoría de Registros</label></th>
+                    <td>
+                        <select name="audit_records" id="audit_records" style="width: 100%; max-width: 400px;">
+                            <option value="1" selected>Sí, registrar cambios en datos capturados (Recomendado)</option>
+                            <option value="0">No, solo auditar la estructura de la base</option>
+                        </select>
+                    </td>
                 </tr>
             </tbody>
         </table>
@@ -87,23 +94,14 @@ if ( $msg === 'deleted' ) echo '<div class="notice notice-success is-dismissible
             <?php if ( $bases ) : foreach ($bases as $base) : 
                 $id_format = str_pad($base['id'], 2, "0", STR_PAD_LEFT);
                 
-                // ESTÁNDAR GLOBAL: Leer desde UTC y traducir a Zona Horaria Global
-                $global_timezone = wp_timezone();
-                
-                $dt_created = date_create($base['created_at'], new DateTimeZone('UTC'));
-                $dt_created->setTimezone($global_timezone);
-                $created_str = $dt_created->format('d M Y | H:i:s');
-                $created_timestamp = $dt_created->getTimestamp();
-                
-                $dt_updated = date_create($base['updated_at'], new DateTimeZone('UTC'));
-                $dt_updated->setTimezone($global_timezone);
-                $updated_str = $dt_updated->format('d M Y | H:i:s');
-                $updated_timestamp = $dt_updated->getTimestamp();
-                
+                $timezone = wp_timezone();
+                $created_timestamp = date_create($base['created_at'], $timezone)->getTimestamp();
+                $updated_timestamp = date_create($base['updated_at'], $timezone)->getTimestamp();
                 $sort_timestamp = max($created_timestamp, $updated_timestamp);
                 
-                // Cut Date no tiene hora, se queda como string literal
-                $cut_date_str = !empty($base['cut_date']) ? wp_date('d M Y', strtotime($base['cut_date'])) : 'N/A';
+                $created_str = wp_date('d F Y | H:i:s', $created_timestamp);
+                $updated_str = wp_date('d F Y | H:i:s', $updated_timestamp);
+                $cut_date_str = !empty($base['cut_date']) ? wp_date('d M Y', date_create($base['cut_date'], $timezone)->getTimestamp()) : 'N/A';
                 
                 $author = get_userdata($base['created_by']);
                 $author_name = $author ? $author->display_name : 'Usuario Desconocido';
@@ -148,7 +146,8 @@ if ( $msg === 'deleted' ) echo '<div class="notice notice-success is-dismissible
                         <div style="display: flex; gap: 5px; flex-wrap: wrap;">
                             <button type="button" class="button button-small crea-icon-btn crea-open-edit" 
                                 data-id="<?php echo $base['id']; ?>" data-name="<?php echo esc_attr($base['form_name']); ?>" data-slug="<?php echo esc_attr($base['form_slug']); ?>" 
-                                data-year="<?php echo esc_attr($base['data_year']); ?>" data-cutdate="<?php echo esc_attr($base['cut_date']); ?>" data-source="<?php echo esc_attr($base['data_source']); ?>" data-comments="<?php echo esc_attr($base['description']); ?>" title="Editar Metadatos">
+                                data-year="<?php echo esc_attr($base['data_year']); ?>" data-cutdate="<?php echo esc_attr($base['cut_date']); ?>" data-source="<?php echo esc_attr($base['data_source']); ?>" data-comments="<?php echo esc_attr($base['description']); ?>" 
+                                data-audit="<?php echo isset($base['audit_records']) ? $base['audit_records'] : 1; ?>" title="Editar Metadatos">
                                 <span class="dashicons dashicons-edit"></span>
                             </button>
                             
@@ -203,6 +202,15 @@ if ( $msg === 'deleted' ) echo '<div class="notice notice-success is-dismissible
                 <tr>
                     <th>Comentarios Internos</th>
                     <td><textarea name="edit_comments" id="edit_comments" rows="3" style="width:100%;"></textarea></td>
+                </tr>
+                <tr>
+                    <th>Auditoría de Registros</th>
+                    <td>
+                        <select name="edit_audit_records" id="edit_audit_records" style="width: 100%;">
+                            <option value="1">Sí, registrar cambios en datos capturados</option>
+                            <option value="0">No, solo auditar la estructura de la base</option>
+                        </select>
+                    </td>
                 </tr>
             </table>
             <div style="margin-top: 15px; text-align: right;">
@@ -283,3 +291,15 @@ if ( $msg === 'deleted' ) echo '<div class="notice notice-success is-dismissible
         </div>
     </div>
 </div>
+
+<script>
+// Pequeño script en línea para capturar el valor de Auditoría de Registros en el modal de Edición
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.crea-open-edit').forEach(btn => {
+        btn.addEventListener('click', function() {
+            var auditVal = this.dataset.audit !== undefined ? this.dataset.audit : 1;
+            document.getElementById('edit_audit_records').value = auditVal;
+        });
+    });
+});
+</script>
