@@ -1,6 +1,8 @@
 <?php
 /**
  * Ruta del archivo: wp-content/plugins/crea/admin/partials/builder-tabs/builder_bases.php
+ *
+ * Contenido de la pestaña "Mis Bases" (Versión Optimizada con Roles, Comentarios y Contadores Reales).
  */
 if ( ! defined( 'WPINC' ) ) { die; }
 
@@ -138,8 +140,20 @@ if ( $msg === 'deleted' ) echo '<div class="notice notice-success is-dismissible
                     </td>
                     
                     <td data-label="Tamaño" style="font-size: 12px;">
-                        <div><strong>0</strong> columnas</div>
-                        <div><strong>0</strong> filas</div>
+                        <?php 
+                            // ☀️ CÁLCULO DINÁMICO DE COLUMNAS Y FILAS
+                            $table_fields = $wpdb->prefix . 'crea_fields';
+                            $count_cols = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table_fields WHERE form_id = %d", $base['id']));
+                            
+                            $physical_table = $wpdb->prefix . "crea_data_" . $base['form_slug'];
+                            $count_rows = 0;
+                            // Verificamos si la tabla física ya fue creada
+                            if ($wpdb->get_var("SHOW TABLES LIKE '$physical_table'") === $physical_table) {
+                                $count_rows = $wpdb->get_var("SELECT COUNT(*) FROM $physical_table");
+                            }
+                        ?>
+                        <div><strong><?php echo intval($count_cols); ?></strong> columnas</div>
+                        <div><strong><?php echo intval($count_rows); ?></strong> filas</div>
                         <div style="opacity: 0.7;">0 KB</div>
                     </td>
                     <td data-label="Acciones">
@@ -156,7 +170,7 @@ if ( $msg === 'deleted' ) echo '<div class="notice notice-success is-dismissible
                             </button>
                             
                             <button type="button" class="button button-small crea-icon-btn crea-open-delete" style="color: var(--crea-danger); border-color: var(--crea-danger);" 
-                                data-id="<?php echo $base['id']; ?>" data-slug="<?php echo esc_attr($base['form_slug']); ?>" data-cols="0" data-rows="0" data-size="0 KB" title="Eliminar Base">
+                                data-id="<?php echo $base['id']; ?>" data-slug="<?php echo esc_attr($base['form_slug']); ?>" data-cols="<?php echo intval($count_cols); ?>" data-rows="<?php echo intval($count_rows); ?>" data-size="0 KB" title="Eliminar Base">
                                 <span class="dashicons dashicons-trash"></span>
                             </button>
                         </div>
@@ -293,7 +307,6 @@ if ( $msg === 'deleted' ) echo '<div class="notice notice-success is-dismissible
 </div>
 
 <script>
-// Pequeño script en línea para capturar el valor de Auditoría de Registros en el modal de Edición
 document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.crea-open-edit').forEach(btn => {
         btn.addEventListener('click', function() {

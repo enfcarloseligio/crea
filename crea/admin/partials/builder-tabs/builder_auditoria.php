@@ -70,7 +70,7 @@ $action_labels = [
 	'create'      => '<span class="dashicons dashicons-database" style="color:var(--crea-primary);"></span> Creación Base',
 	'update_meta' => '<span class="dashicons dashicons-edit" style="color:var(--crea-warning);"></span> Edición Metadatos',
 	'delete'      => '<span class="dashicons dashicons-trash" style="color:var(--crea-danger);"></span> Eliminación',
-	'add_col'     => '<span class="dashicons dashicons-plus-alt2" style="color:#16A34A;"></span> Nueva Variable',
+	'add_col'     => '<span class="dashicons dashicons-plus-alt2" style="color:#16A34A;"></span> Edición Estructura (Nueva Variable)',
 	'edit_col'    => '<span class="dashicons dashicons-admin-generic" style="color:var(--crea-warning);"></span> Edición Variable',
 ];
 

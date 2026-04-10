@@ -28,13 +28,36 @@ class CREA_Admin {
 		global $wpdb;
 		$table_forms = $wpdb->prefix . 'crea_forms';
 		$table_audit = $wpdb->prefix . 'crea_audit_log';
+		$table_fields = $wpdb->prefix . 'crea_fields';
 		$current_user_id = get_current_user_id();
 		
+		// 1. Asegurar Columna audit_records en Formularios
 		$col_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_forms LIKE 'audit_records'");
 		if (empty($col_exists)) {
 			$wpdb->query("ALTER TABLE $table_forms ADD COLUMN audit_records TINYINT(1) DEFAULT 1");
 		}
 		
+		// ☀️ 2. FORZAR CREACIÓN DE TABLAS CON dbDelta (Método Oficial WP)
+		if ( ! function_exists( 'dbDelta' ) ) {
+			require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+		}
+		
+		$sql_fields = "CREATE TABLE $table_fields (
+			id bigint(20) NOT NULL AUTO_INCREMENT,
+			form_id bigint(20) NOT NULL,
+			field_name varchar(255) NOT NULL,
+			field_slug varchar(255) NOT NULL,
+			field_type varchar(50) NOT NULL,
+			is_required tinyint(1) DEFAULT 0,
+			config longtext,
+			created_by bigint(20),
+			updated_by bigint(20),
+			created_at datetime,
+			updated_at datetime,
+			PRIMARY KEY  (id)
+		) {$wpdb->get_charset_collate()};";
+		dbDelta( $sql_fields );
+
 		$current_time = gmdate('Y-m-d H:i:s'); // GMT 0
 		
 		$current_wp_user = wp_get_current_user();
@@ -44,7 +67,7 @@ class CREA_Admin {
 			'name'     => $current_wp_user->display_name
 		);
 
-		// 0. MOTOR DE EXPORTACIÓN DINÁMICO (Excel/CSV)
+		// EXPORTACIÓN DINÁMICA
 		if ( isset($_GET['crea_export']) && isset($_GET['base_slug']) && current_user_can('manage_options') ) {
 			$selected_slug = sanitize_text_field($_GET['base_slug']);
 			if (!empty($selected_slug)) {
@@ -75,14 +98,12 @@ class CREA_Admin {
 				$filename = "auditoria_{$selected_slug}_" . date('Ymd_His');
 
 				if ($export_type === 'csv') {
-					// Agregar cabeceras BOM para que Excel lea los acentos UTF-8 correctamente
 					header('Content-Type: text/csv; charset=utf-8');
 					header('Content-Disposition: attachment; filename=' . $filename . '.csv');
 					$output = fopen('php://output', 'w');
 					fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
 					
-					// Nuevas cabeceras amigables
-					fputcsv($output, array('Fecha (UTC)', 'ID Usuario', 'Username', 'Nombre Completo', 'Accion', 'Slug Base', 'Nombre Base', 'Valores Anteriores', 'Nuevos Valores'));
+					fputcsv($output, array('Fecha (UTC)', 'ID Usuario', 'Username', 'Nombre Real', 'Accion', 'Slug Base', 'Nombre Base', 'Valores Anteriores', 'Nuevos Valores'));
 					
 					foreach ($logs as $log) {
 						$payload = json_decode($log['changes_json'], true);
@@ -106,11 +127,11 @@ class CREA_Admin {
 						$old_final = implode(' | ', $old_str);
 						$new_final = implode(' | ', $new_str);
 						
-						// Acciones más legibles
 						$action_label = $log['action_type'];
-						if ($action_label === 'create') $action_label = 'Creación';
-						if ($action_label === 'update_meta') $action_label = 'Edición';
-						if ($action_label === 'delete') $action_label = 'Eliminación';
+						if ($action_label === 'create') $action_label = 'Creación Base';
+						if ($action_label === 'update_meta') $action_label = 'Edición Metadatos';
+						if ($action_label === 'add_col') $action_label = 'Edición Estructura';
+						if ($action_label === 'delete') $action_label = 'Eliminación Base';
 
 						fputcsv($output, array($log['created_at'], $log['user_id'], $username, $name, $action_label, $base_slug, $base_name, $old_final, $new_final));
 					}
@@ -127,7 +148,7 @@ class CREA_Admin {
 
 		$labels_map = array('form_name' => 'Nombre Base', 'form_slug' => 'Nombre Sistema', 'data_year' => 'Año de Datos', 'cut_date' => 'Fecha de Corte', 'data_source' => 'Fuente / Referencia', 'description' => 'Comentarios', 'audit_records' => 'Auditoría de Registros');
 
-		// 1. CREAR BASE
+		// CREAR BASE
 		if ( isset( $_POST['create_base'] ) && isset( $_POST['crea_save_base_nonce'] ) ) {
 			if ( ! wp_verify_nonce( $_POST['crea_save_base_nonce'], 'crea_save_base_action' ) ) wp_die( 'Error de seguridad.' );
 			
@@ -154,10 +175,8 @@ class CREA_Admin {
 			foreach ($data as $key => $val) {
 				if (in_array($key, ['created_by', 'updated_by', 'created_at', 'updated_at', 'form_id', 'id'])) continue;
 				$label = isset($labels_map[$key]) ? $labels_map[$key] : ucwords(str_replace('_', ' ', $key));
-				
 				$v_new = ($val === '') ? 'Vacío' : $val;
 				if ($key === 'audit_records') $v_new = $val == 1 ? 'Activada' : 'Desactivada';
-				
 				$diff[$label] = array('old' => 'N/A', 'new' => $v_new);
 			}
 			
@@ -167,7 +186,7 @@ class CREA_Admin {
 			exit;
 		}
 
-		// 2. EDITAR METADATOS
+		// EDITAR METADATOS
 		if ( isset( $_POST['edit_base'] ) && isset( $_POST['crea_edit_base_nonce'] ) ) {
 			if ( ! wp_verify_nonce( $_POST['crea_edit_base_nonce'], 'crea_edit_base_action' ) ) wp_die( 'Error de seguridad.' );
 			
@@ -195,7 +214,6 @@ class CREA_Admin {
 					$label = isset($labels_map[$key]) ? $labels_map[$key] : ucwords(str_replace('_', ' ', $key));
 					$v_old = ($old_val === '') ? 'Vacío' : $old_val;
 					$v_new = ($new_val_str === '') ? 'Vacío' : $new_val_str;
-					
 					if ($key === 'audit_records') {
 						$v_old = $old_val == '1' ? 'Activada' : 'Desactivada';
 						$v_new = $new_val_str == '1' ? 'Activada' : 'Desactivada';
@@ -214,7 +232,7 @@ class CREA_Admin {
 			exit;
 		}
 
-		// 3. ELIMINAR BASE
+		// ELIMINAR BASE
 		if ( isset( $_POST['delete_base'] ) && isset( $_POST['crea_delete_base_nonce'] ) ) {
 			if ( ! wp_verify_nonce( $_POST['crea_delete_base_nonce'], 'crea_delete_base_action' ) ) wp_die( 'Error de seguridad.' );
 			
@@ -229,10 +247,8 @@ class CREA_Admin {
 				foreach ($old_data as $key => $val) {
 					if (in_array($key, ['id', 'created_by', 'updated_by', 'created_at', 'updated_at'])) continue;
 					$label = isset($labels_map[$key]) ? $labels_map[$key] : ucwords(str_replace('_', ' ', $key));
-					
 					$v_old = ($val === '' || $val === null) ? 'Vacío' : $val;
 					if ($key === 'audit_records') $v_old = $val == 1 ? 'Activada' : 'Desactivada';
-					
 					$diff[$label] = array('old' => $v_old, 'new' => 'N/A (Eliminado)');
 				}
 			}
@@ -241,7 +257,6 @@ class CREA_Admin {
 			$physical_table = $wpdb->prefix . "crea_data_" . $slug;
 			$wpdb->query("DROP TABLE IF EXISTS $physical_table");
 			
-			$table_fields = $wpdb->prefix . 'crea_fields';
 			$wpdb->delete( $table_fields, array( 'form_id' => $id ), array( '%d' ) );
 			$wpdb->delete( $table_forms, array( 'id' => $id ), array( '%d' ) );
 			
@@ -251,7 +266,142 @@ class CREA_Admin {
 			exit;
 		}
 
-		// 4. GUARDAR APARIENCIA
+		// ☀️ CREAR VARIABLE (COLUMNA)
+		if ( isset( $_POST['create_variable'] ) && isset( $_POST['crea_save_variable_nonce'] ) ) {
+			if ( ! wp_verify_nonce( $_POST['crea_save_variable_nonce'], 'crea_save_variable_action' ) ) wp_die( 'Error de seguridad.' );
+			
+			$base_id = intval($_POST['base_id']);
+			$base_info = $wpdb->get_row($wpdb->prepare("SELECT form_name, form_slug FROM $table_forms WHERE id = %d", $base_id));
+			if (!$base_info) wp_die('Base de datos no encontrada.');
+
+			$field_name = sanitize_text_field($_POST['field_name']);
+			$field_slug = str_replace('-', '_', sanitize_title($_POST['field_slug']));
+			$field_type = sanitize_text_field($_POST['field_type']);
+			$is_required = isset($_POST['is_required']) ? 1 : 0;
+			
+			$human_types = [
+				'text_short' => 'Texto Corto', 'text_long' => 'Texto Largo', 'text_html' => 'Editor HTML',
+				'num_discrete' => 'Numérico Discreto', 'num_continuous' => 'Numérico Continuo',
+				'date' => 'Fecha', 'time' => 'Hora',
+				'select' => 'Menú Desplegable', 'radio' => 'Botones de Radio', 'checkbox' => 'Casillas Múltiples',
+				'relation' => 'Base Relacional'
+			];
+
+			$config = [];
+			$diff = [
+				'Nombre Variable' => ['old' => 'N/A', 'new' => $field_name],
+				'Slug SQL (Columna)' => ['old' => 'N/A', 'new' => $field_slug],
+				'Tipo de Dato' => ['old' => 'N/A', 'new' => isset($human_types[$field_type]) ? $human_types[$field_type] : $field_type],
+				'Dato Obligatorio' => ['old' => 'N/A', 'new' => $is_required ? 'Sí' : 'No']
+			];
+
+			if (in_array($field_type, ['text_short', 'text_long'])) {
+				$config['max_length'] = intval($_POST['text_max_length']);
+				$diff['Caracteres Máximos'] = ['old' => 'N/A', 'new' => $config['max_length']];
+			} elseif ($field_type === 'num_discrete') {
+				$config['digits'] = intval($_POST['num_disc_digits']);
+				$diff['Máx. Dígitos Enteros'] = ['old' => 'N/A', 'new' => $config['digits']];
+			} elseif ($field_type === 'num_continuous') {
+				$config['integers'] = intval($_POST['num_cont_integers']);
+				$config['decimals'] = intval($_POST['num_cont_decimals']);
+				$diff['Máx. Enteros'] = ['old' => 'N/A', 'new' => $config['integers']];
+				$diff['Máx. Decimales'] = ['old' => 'N/A', 'new' => $config['decimals']];
+			} elseif ($field_type === 'time') {
+				$config['time_zone'] = sanitize_text_field($_POST['time_zone_default']);
+				$diff['Zona Horaria'] = ['old' => 'N/A', 'new' => $config['time_zone'] === 'utc' ? 'UTC Absoluta' : 'Local del Sistema'];
+			} elseif (in_array($field_type, ['select', 'radio', 'checkbox'])) {
+				$config['options'] = sanitize_textarea_field($_POST['categorical_options']);
+				$config['default'] = isset($_POST['categorical_default']) ? array_map('sanitize_text_field', $_POST['categorical_default']) : [];
+				$config['id_type'] = sanitize_text_field($_POST['categorical_id_type']);
+				
+				$diff['Opciones de Catálogo'] = ['old' => 'N/A', 'new' => str_replace("\n", ", ", $config['options'])];
+				$diff['Selección por Defecto'] = ['old' => 'N/A', 'new' => empty($config['default']) ? 'Ninguna' : implode(", ", $config['default'])];
+				
+				$id_labels = ['none' => 'Texto Plano (Sin IDs)', 'auto' => 'Automática (1, 2, 3...)', 'manual' => 'Manual (Definida por usuario)'];
+				$diff['Codificación (Estadística)'] = ['old' => 'N/A', 'new' => $id_labels[$config['id_type']]];
+
+				if ($config['id_type'] === 'manual') {
+					$config['manual_codes'] = sanitize_textarea_field($_POST['categorical_manual_codes']);
+					$diff['Códigos Manuales Asignados'] = ['old' => 'N/A', 'new' => str_replace("\n", ", ", $config['manual_codes'])];
+				}
+			} elseif ($field_type === 'relation') {
+				$config['rel_base'] = sanitize_text_field($_POST['rel_base_slug']);
+				$config['rel_field'] = sanitize_text_field($_POST['rel_field_slug']);
+				$config['rel_cond_field'] = sanitize_text_field($_POST['rel_cond_field']);
+				$config['rel_cond_value'] = sanitize_text_field($_POST['rel_cond_value']);
+
+				$diff['Base Maestra Vinculada'] = ['old' => 'N/A', 'new' => empty($config['rel_base']) ? 'Ninguna' : $config['rel_base']];
+				$diff['Variable a Extraer'] = ['old' => 'N/A', 'new' => empty($config['rel_field']) ? 'Ninguna' : $config['rel_field']];
+				if (!empty($config['rel_cond_field'])) {
+					$diff['Condición de Filtrado'] = ['old' => 'N/A', 'new' => "SÓLO SI " . $config['rel_cond_field'] . " = " . $config['rel_cond_value']];
+				}
+			}
+
+			// ☀️ 1. GUARDAR EN EL DICCIONARIO (crea_fields) CON TRAMPA DE ERROR
+			$inserted_field = $wpdb->insert($table_fields, [
+				'form_id' => $base_id,
+				'field_name' => $field_name,
+				'field_slug' => $field_slug,
+				'field_type' => $field_type,
+				'is_required' => $is_required,
+				'config' => wp_json_encode($config),
+				'created_by' => $current_user_id,
+				'updated_by' => $current_user_id,
+				'created_at' => $current_time,
+				'updated_at' => $current_time
+			]);
+
+			if ( false === $inserted_field ) {
+				wp_die( 'Error crítico al guardar la variable en la base de datos MySQL: ' . $wpdb->last_error );
+			}
+
+			// ☀️ 2. CREAR TABLA FÍSICA PARA LOS REGISTROS
+			$physical_table = $wpdb->prefix . "crea_data_" . $base_info->form_slug;
+			$sql_physical = "CREATE TABLE $physical_table (
+				id bigint(20) NOT NULL AUTO_INCREMENT,
+				created_at datetime DEFAULT NULL,
+				created_by bigint(20) DEFAULT NULL,
+				updated_at datetime DEFAULT NULL,
+				updated_by bigint(20) DEFAULT NULL,
+				PRIMARY KEY  (id)
+			) {$wpdb->get_charset_collate()};";
+			dbDelta( $sql_physical );
+
+			// ☀️ 3. TRADUCIR A MYSQL Y CREAR LA COLUMNA FÍSICA
+			$sql_type = "TEXT";
+			if (in_array($field_type, ['text_short', 'select', 'radio', 'relation'])) {
+				$sql_type = "VARCHAR(" . (isset($config['max_length']) ? $config['max_length'] : 255) . ")";
+			} elseif ($field_type === 'num_discrete') {
+				$sql_type = "INT";
+			} elseif ($field_type === 'num_continuous') {
+				$sql_type = "DECIMAL(15,4)";
+			} elseif ($field_type === 'date') {
+				$sql_type = "DATE";
+			} elseif ($field_type === 'time') {
+				$sql_type = "TIME";
+			}
+
+			$col_check = $wpdb->get_results("SHOW COLUMNS FROM $physical_table LIKE '$field_slug'");
+			if (empty($col_check)) {
+				$alter1 = $wpdb->query("ALTER TABLE $physical_table ADD COLUMN $field_slug $sql_type");
+				if ( false === $alter1 ) wp_die('Error al crear columna en tabla física: ' . $wpdb->last_error);
+				
+				// Columna ID Estadística (Oculta)
+				if (in_array($field_type, ['select', 'radio', 'checkbox']) && isset($config['id_type']) && in_array($config['id_type'], ['auto', 'manual'])) {
+					$alter2 = $wpdb->query("ALTER TABLE $physical_table ADD COLUMN id_$field_slug INT");
+					if ( false === $alter2 ) wp_die('Error al crear columna de ID estadístico: ' . $wpdb->last_error);
+				}
+			}
+
+			// ☀️ 4. AUDITORÍA
+			$log_payload = array('user' => $user_snapshot, 'base_slug' => $base_info->form_slug, 'base_name' => $base_info->form_name, 'diff' => $diff);
+			$wpdb->insert( $table_audit, array('form_id' => $base_id, 'action_type' => 'add_col', 'changes_json' => wp_json_encode($log_payload), 'user_id' => $current_user_id, 'created_at' => $current_time) );
+
+			wp_redirect( admin_url( 'admin.php?page=' . $this->plugin_name . '-builder&tab=variables&base_id=' . $base_id . '&msg=var_created' ) );
+			exit;
+		}
+
+		// GUARDAR APARIENCIA
 		if ( isset( $_POST['crea_save_appearance'] ) && isset( $_POST['crea_save_appearance_nonce'] ) ) {
 			if ( ! wp_verify_nonce( $_POST['crea_save_appearance_nonce'], 'crea_save_appearance_action' ) ) wp_die( 'Error de seguridad.' );
 			$admin_colors = array(
