@@ -141,7 +141,7 @@ if ( $msg === 'deleted' ) echo '<div class="notice notice-success is-dismissible
                     
                     <td data-label="Tamaño" style="font-size: 12px;">
                         <?php 
-                            // ☀️ CÁLCULO DINÁMICO DE COLUMNAS Y FILAS
+                            // CÁLCULO DINÁMICO DE COLUMNAS Y FILAS
                             $table_fields = $wpdb->prefix . 'crea_fields';
                             $count_cols = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table_fields WHERE form_id = %d", $base['id']));
                             

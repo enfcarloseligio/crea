@@ -31,13 +31,11 @@ class CREA_Admin {
 		$table_fields = $wpdb->prefix . 'crea_fields';
 		$current_user_id = get_current_user_id();
 		
-		// 1. Asegurar Columna audit_records en Formularios
 		$col_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_forms LIKE 'audit_records'");
 		if (empty($col_exists)) {
 			$wpdb->query("ALTER TABLE $table_forms ADD COLUMN audit_records TINYINT(1) DEFAULT 1");
 		}
 		
-		// ☀️ 2. FORZAR CREACIÓN DE TABLAS CON dbDelta (Método Oficial WP)
 		if ( ! function_exists( 'dbDelta' ) ) {
 			require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
 		}
@@ -58,7 +56,7 @@ class CREA_Admin {
 		) {$wpdb->get_charset_collate()};";
 		dbDelta( $sql_fields );
 
-		$current_time = gmdate('Y-m-d H:i:s'); // GMT 0
+		$current_time = gmdate('Y-m-d H:i:s');
 		
 		$current_wp_user = wp_get_current_user();
 		$user_snapshot = array(
@@ -127,11 +125,14 @@ class CREA_Admin {
 						$old_final = implode(' | ', $old_str);
 						$new_final = implode(' | ', $new_str);
 						
+						// Etiquetas limpias para CSV
 						$action_label = $log['action_type'];
-						if ($action_label === 'create') $action_label = 'Creación Base';
-						if ($action_label === 'update_meta') $action_label = 'Edición Metadatos';
-						if ($action_label === 'add_col') $action_label = 'Edición Estructura';
-						if ($action_label === 'delete') $action_label = 'Eliminación Base';
+						if ($action_label === 'create') $action_label = 'Creación de Base';
+						if ($action_label === 'update_meta') $action_label = 'Edición de Base';
+						if ($action_label === 'delete') $action_label = 'Eliminación de Base';
+						if ($action_label === 'add_col') $action_label = 'Creación de Variable';
+						if ($action_label === 'edit_col') $action_label = 'Edición de Variable';
+						if ($action_label === 'delete_col') $action_label = 'Eliminación de Variable';
 
 						fputcsv($output, array($log['created_at'], $log['user_id'], $username, $name, $action_label, $base_slug, $base_name, $old_final, $new_final));
 					}
@@ -148,7 +149,7 @@ class CREA_Admin {
 
 		$labels_map = array('form_name' => 'Nombre Base', 'form_slug' => 'Nombre Sistema', 'data_year' => 'Año de Datos', 'cut_date' => 'Fecha de Corte', 'data_source' => 'Fuente / Referencia', 'description' => 'Comentarios', 'audit_records' => 'Auditoría de Registros');
 
-		// CREAR BASE
+		// 1. CREAR BASE
 		if ( isset( $_POST['create_base'] ) && isset( $_POST['crea_save_base_nonce'] ) ) {
 			if ( ! wp_verify_nonce( $_POST['crea_save_base_nonce'], 'crea_save_base_action' ) ) wp_die( 'Error de seguridad.' );
 			
@@ -186,7 +187,7 @@ class CREA_Admin {
 			exit;
 		}
 
-		// EDITAR METADATOS
+		// 2. EDITAR METADATOS
 		if ( isset( $_POST['edit_base'] ) && isset( $_POST['crea_edit_base_nonce'] ) ) {
 			if ( ! wp_verify_nonce( $_POST['crea_edit_base_nonce'], 'crea_edit_base_action' ) ) wp_die( 'Error de seguridad.' );
 			
@@ -232,7 +233,7 @@ class CREA_Admin {
 			exit;
 		}
 
-		// ELIMINAR BASE
+		// 3. ELIMINAR BASE
 		if ( isset( $_POST['delete_base'] ) && isset( $_POST['crea_delete_base_nonce'] ) ) {
 			if ( ! wp_verify_nonce( $_POST['crea_delete_base_nonce'], 'crea_delete_base_action' ) ) wp_die( 'Error de seguridad.' );
 			
@@ -266,7 +267,7 @@ class CREA_Admin {
 			exit;
 		}
 
-		// ☀️ CREAR VARIABLE (COLUMNA)
+		// 4. CREAR VARIABLE (COLUMNA)
 		if ( isset( $_POST['create_variable'] ) && isset( $_POST['crea_save_variable_nonce'] ) ) {
 			if ( ! wp_verify_nonce( $_POST['crea_save_variable_nonce'], 'crea_save_variable_action' ) ) wp_die( 'Error de seguridad.' );
 			
@@ -337,7 +338,6 @@ class CREA_Admin {
 				}
 			}
 
-			// ☀️ 1. GUARDAR EN EL DICCIONARIO (crea_fields) CON TRAMPA DE ERROR
 			$inserted_field = $wpdb->insert($table_fields, [
 				'form_id' => $base_id,
 				'field_name' => $field_name,
@@ -351,13 +351,10 @@ class CREA_Admin {
 				'updated_at' => $current_time
 			]);
 
-			if ( false === $inserted_field ) {
-				wp_die( 'Error crítico al guardar la variable en la base de datos MySQL: ' . $wpdb->last_error );
-			}
+			if ( false === $inserted_field ) wp_die( 'Error crítico al guardar la variable: ' . $wpdb->last_error );
 
-			// ☀️ 2. CREAR TABLA FÍSICA PARA LOS REGISTROS
 			$physical_table = $wpdb->prefix . "crea_data_" . $base_info->form_slug;
-			$sql_physical = "CREATE TABLE $physical_table (
+			$sql_physical = "CREATE TABLE IF NOT EXISTS $physical_table (
 				id bigint(20) NOT NULL AUTO_INCREMENT,
 				created_at datetime DEFAULT NULL,
 				created_by bigint(20) DEFAULT NULL,
@@ -367,7 +364,6 @@ class CREA_Admin {
 			) {$wpdb->get_charset_collate()};";
 			dbDelta( $sql_physical );
 
-			// ☀️ 3. TRADUCIR A MYSQL Y CREAR LA COLUMNA FÍSICA
 			$sql_type = "TEXT";
 			if (in_array($field_type, ['text_short', 'select', 'radio', 'relation'])) {
 				$sql_type = "VARCHAR(" . (isset($config['max_length']) ? $config['max_length'] : 255) . ")";
@@ -386,18 +382,92 @@ class CREA_Admin {
 				$alter1 = $wpdb->query("ALTER TABLE $physical_table ADD COLUMN $field_slug $sql_type");
 				if ( false === $alter1 ) wp_die('Error al crear columna en tabla física: ' . $wpdb->last_error);
 				
-				// Columna ID Estadística (Oculta)
 				if (in_array($field_type, ['select', 'radio', 'checkbox']) && isset($config['id_type']) && in_array($config['id_type'], ['auto', 'manual'])) {
 					$alter2 = $wpdb->query("ALTER TABLE $physical_table ADD COLUMN id_$field_slug INT");
 					if ( false === $alter2 ) wp_die('Error al crear columna de ID estadístico: ' . $wpdb->last_error);
 				}
 			}
 
-			// ☀️ 4. AUDITORÍA
 			$log_payload = array('user' => $user_snapshot, 'base_slug' => $base_info->form_slug, 'base_name' => $base_info->form_name, 'diff' => $diff);
 			$wpdb->insert( $table_audit, array('form_id' => $base_id, 'action_type' => 'add_col', 'changes_json' => wp_json_encode($log_payload), 'user_id' => $current_user_id, 'created_at' => $current_time) );
 
 			wp_redirect( admin_url( 'admin.php?page=' . $this->plugin_name . '-builder&tab=variables&base_id=' . $base_id . '&msg=var_created' ) );
+			exit;
+		}
+
+		// 5. EDITAR VARIABLE (Etiqueta y estado)
+		if ( isset( $_POST['edit_variable'] ) && isset( $_POST['crea_edit_var_nonce'] ) ) {
+			if ( ! wp_verify_nonce( $_POST['crea_edit_var_nonce'], 'crea_edit_var_action' ) ) wp_die( 'Error de seguridad.' );
+			
+			$var_id = intval($_POST['edit_var_id']);
+			$old_field = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_fields WHERE id = %d", $var_id), ARRAY_A);
+			if (!$old_field) wp_die('Variable no encontrada.');
+			
+			$base_id = $old_field['form_id'];
+			$base_info = $wpdb->get_row($wpdb->prepare("SELECT form_name, form_slug FROM $table_forms WHERE id = %d", $base_id));
+			
+			$new_name = sanitize_text_field($_POST['edit_var_name']);
+			$new_req = isset($_POST['edit_var_req']) ? 1 : 0;
+			
+			$diff = [];
+			if ($old_field['field_name'] !== $new_name) {
+				$diff['Nombre Variable'] = ['old' => $old_field['field_name'], 'new' => $new_name];
+			}
+			if ($old_field['is_required'] != $new_req) {
+				$diff['Dato Obligatorio'] = ['old' => $old_field['is_required'] ? 'Sí' : 'No', 'new' => $new_req ? 'Sí' : 'No'];
+			}
+			
+			if (!empty($diff)) {
+				$wpdb->update($table_fields, [
+					'field_name' => $new_name,
+					'is_required' => $new_req,
+					'updated_by' => $current_user_id,
+					'updated_at' => $current_time
+				], ['id' => $var_id]);
+				
+				$log_payload = array('user' => $user_snapshot, 'base_slug' => $base_info->form_slug, 'base_name' => $base_info->form_name, 'diff' => $diff);
+				$wpdb->insert( $table_audit, array('form_id' => $base_id, 'action_type' => 'edit_col', 'changes_json' => wp_json_encode($log_payload), 'user_id' => $current_user_id, 'created_at' => $current_time) );
+			}
+			
+			wp_redirect( admin_url( 'admin.php?page=' . $this->plugin_name . '-builder&tab=variables&base_id=' . $base_id . '&msg=var_updated' ) );
+			exit;
+		}
+
+		// 6. ELIMINAR VARIABLE (Destrucción de columna MySQL)
+		if ( isset( $_POST['delete_variable'] ) && isset( $_POST['crea_delete_var_nonce'] ) ) {
+			if ( ! wp_verify_nonce( $_POST['crea_delete_var_nonce'], 'crea_delete_var_action' ) ) wp_die( 'Error de seguridad.' );
+			
+			$var_id = intval($_POST['delete_var_id']);
+			$base_id = intval($_POST['base_id']);
+			
+			$old_field = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_fields WHERE id = %d", $var_id), ARRAY_A);
+			if (!$old_field) wp_die('Variable no encontrada.');
+			
+			$base_info = $wpdb->get_row($wpdb->prepare("SELECT form_name, form_slug FROM $table_forms WHERE id = %d", $base_id));
+			
+			$physical_table = $wpdb->prefix . "crea_data_" . $base_info->form_slug;
+			$field_slug = $old_field['field_slug'];
+			
+			$col_check = $wpdb->get_results("SHOW COLUMNS FROM $physical_table LIKE '$field_slug'");
+			if (!empty($col_check)) {
+				$wpdb->query("ALTER TABLE $physical_table DROP COLUMN $field_slug");
+				
+				$col_id_check = $wpdb->get_results("SHOW COLUMNS FROM $physical_table LIKE 'id_$field_slug'");
+				if (!empty($col_id_check)) {
+					$wpdb->query("ALTER TABLE $physical_table DROP COLUMN id_$field_slug");
+				}
+			}
+			
+			$wpdb->delete($table_fields, ['id' => $var_id], ['%d']);
+			
+			$diff = [
+				'Destrucción de Estructura' => ['old' => 'Columna Activa (' . $old_field['field_name'] . ')', 'new' => 'Columna SQL Eliminada Permanentemente']
+			];
+			$log_payload = array('user' => $user_snapshot, 'base_slug' => $base_info->form_slug, 'base_name' => $base_info->form_name, 'diff' => $diff);
+			
+			$wpdb->insert( $table_audit, array('form_id' => $base_id, 'action_type' => 'delete_col', 'changes_json' => wp_json_encode($log_payload), 'user_id' => $current_user_id, 'created_at' => $current_time) );
+			
+			wp_redirect( admin_url( 'admin.php?page=' . $this->plugin_name . '-builder&tab=variables&base_id=' . $base_id . '&msg=var_deleted' ) );
 			exit;
 		}
 

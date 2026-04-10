@@ -1,6 +1,8 @@
 <?php
 /**
  * Ruta del archivo: wp-content/plugins/crea/admin/partials/builder-tabs/builder_variables.php
+ *
+ * Pestaña de Variables (Columnas): Diccionario de Datos Avanzado con UI Optimizada y Modales.
  */
 if ( ! defined( 'WPINC' ) ) { die; }
 
@@ -17,45 +19,46 @@ if ($selected_base_id > 0) {
     if ($base_info) $selected_base_name = $base_info->form_name;
 }
 
-// ☀️ Obtener las variables REALES de la base de datos
 $variables = [];
 if ($selected_base_id > 0) {
-	$variables = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_fields WHERE form_id = %d ORDER BY id ASC", $selected_base_id), ARRAY_A);
+    $variables = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_fields WHERE form_id = %d ORDER BY id ASC", $selected_base_id), ARRAY_A);
 }
 
 $msg = isset($_GET['msg']) ? sanitize_text_field($_GET['msg']) : '';
 if ( $msg === 'var_created' ) echo '<div class="notice notice-success is-dismissible"><p>Variable creada y columna añadida a la tabla exitosamente.</p></div>';
+if ( $msg === 'var_updated' ) echo '<div class="notice notice-success is-dismissible"><p>Etiqueta y estado de la variable actualizados correctamente.</p></div>';
+if ( $msg === 'var_deleted' ) echo '<div class="notice notice-success is-dismissible"><p>Variable eliminada. La columna SQL y sus datos han sido destruidos permanentemente.</p></div>';
 
 $human_types = [
-	'text_short' => 'Texto Corto', 'text_long' => 'Texto Largo', 'text_html' => 'Editor HTML',
-	'num_discrete' => 'Numérico Discreto', 'num_continuous' => 'Numérico Continuo',
-	'date' => 'Fecha', 'time' => 'Hora',
-	'select' => 'Menú Desplegable', 'radio' => 'Botones de Radio', 'checkbox' => 'Casillas Múltiples',
-	'relation' => 'Base Relacional'
+    'text_short' => 'Texto Corto', 'text_long' => 'Texto Largo', 'text_html' => 'Editor HTML',
+    'num_discrete' => 'Numérico Discreto', 'num_continuous' => 'Numérico Continuo',
+    'date' => 'Fecha', 'time' => 'Hora',
+    'select' => 'Menú Desplegable', 'radio' => 'Botones de Radio', 'checkbox' => 'Casillas Múltiples',
+    'relation' => 'Base Relacional'
 ];
 ?>
 
 <div class="crea-card" style="border-top: 4px solid var(--crea-ink);">
-	<div class="crea-card-header">
-		<h2>Diccionario de Datos (Estructura de Variables)</h2>
-	</div>
-	
-	<form method="get" action="admin.php" style="margin-bottom: 25px; padding: 20px; background: #F8FAFC; border-radius: 8px; border: 1px solid #E2E8F0; display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
-		<input type="hidden" name="page" value="crea-builder">
-		<input type="hidden" name="tab" value="variables">
-		
-		<div style="flex: 1; min-width: 300px;">
-			<label for="base_id" style="font-weight: 600; display: block; margin-bottom: 8px;">1. Selecciona la base de datos que deseas estructurar:</label>
-			<select name="base_id" id="base_id" class="crea-searchable-select" onchange="this.form.submit()">
-				<option value="0">-- Buscar y seleccionar una base --</option>
-				<?php foreach ( $bases as $b ) : ?>
-					<option value="<?php echo $b['id']; ?>" <?php selected( $selected_base_id, $b['id'] ); ?>>
-						<?php echo esc_html( $b['form_name'] ) . ' (' . esc_html( $b['form_slug'] ) . ')'; ?>
-					</option>
-				<?php endforeach; ?>
-			</select>
-		</div>
-	</form>
+    <div class="crea-card-header">
+        <h2>Diccionario de Datos (Estructura de Variables)</h2>
+    </div>
+    
+    <form method="get" action="admin.php" style="margin-bottom: 25px; padding: 20px; background: #F8FAFC; border-radius: 8px; border: 1px solid #E2E8F0; display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
+        <input type="hidden" name="page" value="crea-builder">
+        <input type="hidden" name="tab" value="variables">
+        
+        <div style="flex: 1; min-width: 300px;">
+            <label for="base_id" style="font-weight: 600; display: block; margin-bottom: 8px;">1. Selecciona la base de datos que deseas estructurar:</label>
+            <select name="base_id" id="base_id" class="crea-searchable-select" onchange="this.form.submit()">
+                <option value="0">-- Buscar y seleccionar una base --</option>
+                <?php foreach ( $bases as $b ) : ?>
+                    <option value="<?php echo $b['id']; ?>" <?php selected( $selected_base_id, $b['id'] ); ?>>
+                        <?php echo esc_html( $b['form_name'] ) . ' (' . esc_html( $b['form_slug'] ) . ')'; ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+    </form>
 
     <?php if ( $selected_base_id > 0 ) : ?>
         
@@ -65,12 +68,11 @@ $human_types = [
             </h3>
             
             <form method="post" action="" id="crea-new-variable-form">
-				<?php wp_nonce_field( 'crea_save_variable_action', 'crea_save_variable_nonce' ); ?>
-				<input type="hidden" name="create_variable" value="1">
-				<input type="hidden" name="base_id" value="<?php echo esc_attr($selected_base_id); ?>">
+                <?php wp_nonce_field( 'crea_save_variable_action', 'crea_save_variable_nonce' ); ?>
+                <input type="hidden" name="create_variable" value="1">
+                <input type="hidden" name="base_id" value="<?php echo esc_attr($selected_base_id); ?>">
 
                 <div style="display: flex; gap: 30px; flex-wrap: wrap;">
-                    
                     <div style="flex: 1; min-width: 300px;">
                         <div style="margin-bottom: 15px;">
                             <label for="field_name" style="font-weight: 600; display:block; margin-bottom:5px;">Nombre de la Variable (Etiqueta) *</label>
@@ -131,7 +133,7 @@ $human_types = [
                             <div id="conf_html" style="display: none;">
                                 <span style="font-size: 13px; color: #334155; display: block; line-height: 1.4;">
                                     <strong>Capacidad Extendida:</strong> El formato HTML requiere espacio adicional para guardar etiquetas de estilo.<br>
-                                    <span style="color: #64748b; font-size: 12px; margin-top: 5px; display: inline-block;">Límite técnico: 65,535 caracteres.</span>
+                                    <span style="color: #64748b; font-size: 12px; margin-top: 5px; display: inline-block;">Límite técnico: 65,535 caracteres (Aproximadamente 15 a 20 hojas de texto).</span>
                                 </span>
                             </div>
 
@@ -153,12 +155,18 @@ $human_types = [
                                 </div>
                             </div>
 
+                            <div id="conf_date" style="display: none;">
+                                <span style="font-size: 13px; color: #334155; display: block; line-height: 1.4;">
+                                    <strong>Calendario Estándar:</strong> El sistema utiliza el calendario Gregoriano para el almacenamiento y cálculos de fechas.
+                                </span>
+                            </div>
+
                             <div id="conf_time" style="display: none;">
-                                <label style="font-weight: 600; font-size: 13px;">Zona Horaria por defecto:</label>
-                                <select name="time_zone_default" style="width: 100%; margin-top: 4px;">
-                                    <option value="local">Hora Local (Configurada en WP: <?php echo wp_timezone_string(); ?>)</option>
-                                    <option value="utc">Hora Absoluta (UTC / GMT 0)</option>
+                                <label style="font-weight: 600; font-size: 13px;">Zona Horaria de Visualización:</label>
+                                <select name="time_zone_default" style="width: 100%; margin-top: 4px;" class="crea-searchable-select">
+                                    <?php echo wp_timezone_choice( wp_timezone_string() ); ?>
                                 </select>
+                                <span style="font-size: 11px; color: #64748b; display: block; margin-top: 4px;"><strong>Nota Técnica:</strong> La hora siempre se guardará en la base de datos en UTC (GMT 0) absoluto para integridad forense. Esta opción solo define cómo se le mostrará al usuario en pantalla.</span>
                             </div>
 
                             <div id="conf_categorical" style="display: none;">
@@ -167,7 +175,7 @@ $human_types = [
                                 
                                 <div style="margin-top: 15px;">
                                     <label style="font-weight: 600; font-size: 13px;">Opción(es) por defecto (Opcional):</label>
-                                    <select name="categorical_default[]" id="categorical_default" style="width: 100%; margin-top: 4px;" multiple="multiple">
+                                    <select name="categorical_default[]" id="categorical_default" style="width: 100%; margin-top: 4px;">
                                         <option value="">-- Ninguna por defecto --</option>
                                     </select>
                                 </div>
@@ -226,64 +234,170 @@ $human_types = [
             </form>
         </div>
 
-        <h3 style="margin-top: 30px;">Variables Configuradas en: <?php echo esc_html($selected_base_name); ?></h3>
-        <table class="crea-table" style="table-layout: auto; border: 1px solid #E2E8F0;">
-            <thead>
-                <tr>
-                    <th style="width: 7%;">ID</th>
-                    <th style="width: 25%;">Nombre de Variable</th>
-                    <th style="width: 20%;">Identificador (Slug)</th>
-                    <th style="width: 20%;">Tipo de Dato</th>
-                    <th style="width: 10%; text-align: center;">Obligatorio</th>
-                    <th style="width: 18%;">Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if ( empty($variables) ) : ?>
-                    <tr class="crea-empty-row">
-                        <td colspan="6" style="text-align:center; padding: 40px; opacity: 0.7;">
-                            <span class="dashicons dashicons-layout" style="font-size: 40px; width: 40px; height: 40px; margin-bottom: 10px; opacity: 0.5;"></span><br>
-                            <span style="font-size: 16px;">Estructura Limpia</span><br>
-                            <span style="font-size: 13px;">Aún no has definido ninguna variable para esta base de datos. Usa el panel superior para comenzar.</span>
-                        </td>
+        <div class="crea-card" style="padding: 0; overflow: hidden; border: 1px solid #E2E8F0; border-top: none; border-radius: 8px;">
+            <div class="crea-toolbar" style="padding: 15px; border-bottom: 1px solid var(--crea-th-bg); background: transparent; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                <div class="crea-table-controls">
+                    <label style="font-size: 13px;">Mostrar 
+                        <select id="crea-vars-per-page" style="margin: 0 5px; font-size: 13px;">
+                            <option value="25">25</option><option value="50">50</option><option value="100">100</option><option value="all">Todos</option>
+                        </select> registros
+                    </label>
+                </div>
+                <div class="crea-pagination"><div id="crea-vars-table-pagination-top" style="display: flex; gap: 5px;"></div></div>
+                <div class="crea-search-box" style="position: relative; width: 100%; max-width: 300px;">
+                    <span class="dashicons dashicons-search" style="position: absolute; left: 10px; top: 6px; color: inherit; opacity: 0.5;"></span>
+                    <input type="text" id="crea-search-vars" placeholder="Buscar variable..." style="width: 100%; padding: 4px 8px 4px 35px;">
+                </div>
+            </div>
+
+            <table id="crea-vars-table" class="crea-table" style="table-layout: auto; width: 100%; border: none;">
+                <thead>
+                    <tr>
+                        <th style="width: 7%;" class="crea-sortable" data-sort-type="number">ID <span class="dashicons dashicons-sort"></span></th>
+                        <th style="width: 25%;" class="crea-sortable" data-sort-type="string">Nombre (Etiqueta) <span class="dashicons dashicons-sort"></span></th>
+                        <th style="width: 20%;" class="crea-sortable" data-sort-type="string">Slug SQL <span class="dashicons dashicons-sort"></span></th>
+                        <th style="width: 20%;" class="crea-sortable" data-sort-type="string">Tipo de Dato <span class="dashicons dashicons-sort"></span></th>
+                        <th style="width: 10%; text-align: center;">Obligatorio</th>
+                        <th style="width: 18%;">Acciones</th>
                     </tr>
-                <?php else : ?>
-					<?php foreach ($variables as $v) : 
-						$id_format = str_pad($v['id'], 2, "0", STR_PAD_LEFT);
-						$tipo_legible = isset($human_types[$v['field_type']]) ? $human_types[$v['field_type']] : $v['field_type'];
-					?>
-					<tr>
-                        <td><strong><?php echo $id_format; ?></strong></td>
-                        <td><strong><?php echo esc_html($v['field_name']); ?></strong></td>
-                        <td><code><?php echo esc_html($v['field_slug']); ?></code></td>
-                        <td><?php echo esc_html($tipo_legible); ?></td>
-                        <td style="text-align: center;">
-							<?php if ($v['is_required']) : ?>
-								<span class="dashicons dashicons-yes" style="color: #16A34A;"></span>
-							<?php else: ?>
-								<span class="dashicons dashicons-minus" style="opacity: 0.3;"></span>
-							<?php endif; ?>
-						</td>
-                        <td>
-                            <div style="display: flex; gap: 5px;">
-                                <button type="button" class="button button-small crea-icon-btn" title="Ver Configuración"><span class="dashicons dashicons-visibility"></span></button>
-                                <button type="button" class="button button-small crea-icon-btn" title="Editar"><span class="dashicons dashicons-edit"></span></button>
-                                <button type="button" class="button button-small crea-icon-btn" style="color: var(--crea-danger); border-color: var(--crea-danger);" title="Eliminar"><span class="dashicons dashicons-trash"></span></button>
-                            </div>
-                        </td>
-                    </tr>
-					<?php endforeach; ?>
-                <?php endif; ?>
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    <?php if ( empty($variables) ) : ?>
+                        <tr class="crea-empty-row">
+                            <td colspan="6" style="text-align:center; padding: 40px; opacity: 0.7;">
+                                <span class="dashicons dashicons-layout" style="font-size: 40px; width: 40px; height: 40px; margin-bottom: 10px; opacity: 0.5;"></span><br>
+                                <span style="font-size: 16px;">Estructura Limpia</span><br>
+                                <span style="font-size: 13px;">Aún no has definido ninguna variable.</span>
+                            </td>
+                        </tr>
+                    <?php else : ?>
+                        <?php foreach ($variables as $v) : 
+                            $id_format = str_pad($v['id'], 2, "0", STR_PAD_LEFT);
+                            $tipo_legible = isset($human_types[$v['field_type']]) ? $human_types[$v['field_type']] : $v['field_type'];
+                            $safe_config = esc_attr(wp_json_encode($v)); 
+                        ?>
+                        <tr class="crea-data-row">
+                            <td data-label="ID" data-sort-val="<?php echo $v['id']; ?>"><strong><?php echo $id_format; ?></strong></td>
+                            <td data-label="Nombre" data-sort-val="<?php echo esc_attr($v['field_name']); ?>"><strong><?php echo esc_html($v['field_name']); ?></strong></td>
+                            <td data-label="Slug" data-sort-val="<?php echo esc_attr($v['field_slug']); ?>"><code><?php echo esc_html($v['field_slug']); ?></code></td>
+                            <td data-label="Tipo" data-sort-val="<?php echo esc_attr($tipo_legible); ?>"><?php echo esc_html($tipo_legible); ?></td>
+                            <td data-label="Obligatorio" style="text-align: center;">
+                                <?php if ($v['is_required']) : ?>
+                                    <span class="dashicons dashicons-yes" style="color: #16A34A;"></span>
+                                <?php else: ?>
+                                    <span class="dashicons dashicons-minus" style="opacity: 0.3;"></span>
+                                <?php endif; ?>
+                            </td>
+                            <td data-label="Acciones">
+                                <div style="display: flex; gap: 5px;">
+                                    <button type="button" class="button button-small crea-icon-btn crea-open-view-var" data-config="<?php echo $safe_config; ?>" title="Ver Configuración"><span class="dashicons dashicons-visibility"></span></button>
+                                    <button type="button" class="button button-small crea-icon-btn crea-open-edit-var" data-config="<?php echo $safe_config; ?>" title="Editar Etiqueta"><span class="dashicons dashicons-edit"></span></button>
+                                    <button type="button" class="button button-small crea-icon-btn crea-open-delete-var" style="color: var(--crea-danger); border-color: var(--crea-danger);" data-id="<?php echo $v['id']; ?>" data-name="<?php echo esc_attr($v['field_name']); ?>" title="Eliminar Variable"><span class="dashicons dashicons-trash"></span></button>
+                                </div>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+
+            <div class="crea-pagination" style="padding: 15px; background: transparent; border-top: 1px solid var(--crea-th-bg); display: flex; justify-content: space-between; align-items: center;">
+                <div id="crea-vars-table-count" style="font-size: 13px; opacity: 0.8;"></div>
+                <div id="crea-vars-table-pagination-bottom" style="display: flex; gap: 5px;"></div>
+            </div>
+        </div>
 
     <?php elseif( isset($_GET['base_id']) ): ?>
         <div class="notice notice-info inline"><p>Por favor selecciona una base de datos válida para gestionar su estructura.</p></div>
     <?php endif; ?>
 </div>
 
+<div id="crea-view-var-modal" class="crea-modal-overlay">
+    <div class="crea-modal-content">
+        <span class="dashicons dashicons-no-alt crea-modal-close"></span>
+        <h2 style="margin-top:0;">Configuración de Variable</h2>
+        <div id="view-var-content" style="background: #F8FAFC; padding: 15px; border-radius: 6px; border: 1px solid #E2E8F0;">
+            </div>
+        <div style="margin-top: 15px; text-align: right;">
+            <button type="button" class="button crea-cancel-modal">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<div id="crea-edit-var-modal" class="crea-modal-overlay">
+    <div class="crea-modal-content">
+        <span class="dashicons dashicons-no-alt crea-modal-close"></span>
+        <h2 style="margin-top:0;">Editar Variable</h2>
+        <form method="post" action="">
+            <input type="hidden" name="edit_var_id" id="edit_var_id">
+            <table class="form-table">
+                <tr>
+                    <th>Nombre (Etiqueta) *</th>
+                    <td><input type="text" name="edit_var_name" id="edit_var_name" class="regular-text" required></td>
+                </tr>
+                <tr>
+                    <th>Slug SQL</th>
+                    <td><input type="text" id="edit_var_slug" class="regular-text" disabled> <span class="description">Protegido para integridad de datos.</span></td>
+                </tr>
+                <tr>
+                    <th>Tipo de Dato</th>
+                    <td><input type="text" id="edit_var_type" class="regular-text" disabled> <span class="description">Protegido para integridad de datos.</span></td>
+                </tr>
+                <tr>
+                    <th>Obligatorio</th>
+                    <td><label><input type="checkbox" name="edit_var_req" id="edit_var_req" value="1"> Requerido</label></td>
+                </tr>
+            </table>
+            <p style="font-size: 12px; color: #64748b; margin-top: 15px;"><em>Nota: Los cambios estructurales profundos (Opciones, Límites) no se pueden alterar una vez que la columna existe en la base de datos para evitar pérdida de datos huérfanos.</em></p>
+            <div style="margin-top: 15px; text-align: right;">
+                <?php wp_nonce_field( 'crea_edit_var_action', 'crea_edit_var_nonce' ); ?>
+                <input type="hidden" name="edit_variable" value="1">
+                <button type="button" class="button crea-cancel-modal">Cancelar</button>
+                <input type="submit" class="button button-primary" value="Guardar Cambios">
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="crea-delete-var-step1" class="crea-modal-overlay crea-modal-alert">
+    <div class="crea-modal-content" style="text-align: center;">
+        <span class="dashicons dashicons-warning" style="font-size: 50px; width: 50px; height: 50px;"></span>
+        <h2>Advertencia de Eliminación</h2>
+        <p style="font-size: 16px;">Estás a punto de borrar la variable: <strong id="del-var-name-display"></strong>.</p>
+        <p style="color: var(--crea-danger); font-size: 13px;">Esto destruirá permanentemente esta columna en SQL y <strong>TODOS los datos</strong> que los usuarios hayan capturado en ella.</p>
+        <div style="margin-top: 20px;">
+            <button type="button" class="button button-large crea-cancel-modal">Cancelar</button>
+            <button type="button" class="button button-large button-primary" id="btn-delete-var-continue">Continuar</button>
+        </div>
+    </div>
+</div>
+
+<div id="crea-delete-var-step2" class="crea-modal-overlay crea-modal-danger">
+    <div class="crea-modal-content" style="text-align: center;">
+        <span class="dashicons dashicons-dismiss" style="font-size: 50px; width: 50px; height: 50px;"></span>
+        <h2>Acción Irremediable</h2>
+        <p style="font-size: 16px;">Para confirmar la destrucción de esta columna, escribe <strong>ELIMINAR</strong>:</p>
+        <form method="post" action="">
+            <input type="hidden" name="delete_var_id" id="delete_var_id">
+            <input type="hidden" name="base_id" value="<?php echo esc_attr($selected_base_id); ?>">
+            <input type="text" id="confirm-var-delete" class="crea-input-danger regular-text" autocomplete="off" placeholder="ELIMINAR">
+            <div style="margin-top: 25px;">
+                <?php wp_nonce_field( 'crea_delete_var_action', 'crea_delete_var_nonce' ); ?>
+                <input type="hidden" name="delete_variable" value="1">
+                <button type="button" class="button button-large crea-cancel-modal">Cancelar</button>
+                <button type="submit" id="btn-submit-var-delete" class="button button-large" style="background: var(--crea-danger); color: #fff; border-color: var(--crea-danger);" disabled>Aceptar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    
+    if(window.CreaAdmin && typeof window.CreaAdmin.initDynamicTable === 'function') {
+        window.CreaAdmin.initDynamicTable('crea-vars-table', 'crea-search-vars', 'crea-vars-per-page');
+    }
+
     var fName = document.getElementById('field_name');
     var fSlug = document.getElementById('field_slug');
     if (fName && fSlug) {
@@ -302,6 +416,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var confHtml = document.getElementById('conf_html');
     var confNumDisc = document.getElementById('conf_num_discrete');
     var confNumCont = document.getElementById('conf_num_continuous');
+    var confDate = document.getElementById('conf_date');
     var confTime = document.getElementById('conf_time');
     var confCateg = document.getElementById('conf_categorical');
     var confRel = document.getElementById('conf_relation');
@@ -311,7 +426,7 @@ document.addEventListener('DOMContentLoaded', function() {
             var val = this.value;
             wrapConfig.style.display = 'none'; confText.style.display = 'none'; confHtml.style.display = 'none';
             confNumDisc.style.display = 'none'; confNumCont.style.display = 'none'; confTime.style.display = 'none';
-            confCateg.style.display = 'none'; confRel.style.display = 'none';
+            confDate.style.display = 'none'; confCateg.style.display = 'none'; confRel.style.display = 'none';
 
             if (!val) return;
             wrapConfig.style.display = 'block';
@@ -323,12 +438,20 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (val === 'text_html') { confHtml.style.display = 'block';
             } else if (val === 'num_discrete') { confNumDisc.style.display = 'block';
             } else if (val === 'num_continuous') { confNumCont.style.display = 'block';
+            } else if (val === 'date') { confDate.style.display = 'block';
             } else if (val === 'time') { confTime.style.display = 'block';
             } else if (val === 'select' || val === 'radio' || val === 'checkbox') {
                 confCateg.style.display = 'block';
                 var defSelect = document.getElementById('categorical_default');
-                if (val === 'checkbox') { defSelect.setAttribute('multiple', 'multiple'); } else { defSelect.removeAttribute('multiple'); }
-                if (jQuery && jQuery(defSelect).hasClass("select2-hidden-accessible")) jQuery(defSelect).select2('destroy').select2({width: '100%'});
+                if (val === 'checkbox') { 
+                    defSelect.setAttribute('multiple', 'multiple'); 
+                } else { 
+                    defSelect.removeAttribute('multiple'); 
+                }
+                
+                if (jQuery && jQuery(defSelect).hasClass("select2-hidden-accessible")) {
+                    jQuery(defSelect).select2('destroy').select2({width: '100%', placeholder: 'Selecciona una o varias opciones'});
+                }
             } else if (val === 'relation') { confRel.style.display = 'block'; }
         });
     }
@@ -338,7 +461,14 @@ document.addEventListener('DOMContentLoaded', function() {
     if (txtOptions && selDefault) {
         txtOptions.addEventListener('input', function() {
             var lines = this.value.split('\n').filter(line => line.trim() !== '');
-            var currentSelected = Array.from(selDefault.selectedOptions).map(opt => opt.value);
+            var isMultiple = selDefault.hasAttribute('multiple');
+            
+            var currentSelected = [];
+            if (isMultiple) {
+                currentSelected = Array.from(selDefault.selectedOptions).map(opt => opt.value);
+            } else {
+                currentSelected = [selDefault.value];
+            }
             
             selDefault.innerHTML = '';
             var optNone = document.createElement('option');
@@ -381,5 +511,71 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     if (txtManualCodes) txtManualCodes.addEventListener('input', validateManualCodes);
+
+    document.querySelectorAll('.crea-open-view-var').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            var data = JSON.parse(this.dataset.config);
+            var parsedConfig = JSON.parse(data.config);
+            
+            var html = `<p><strong>Nombre:</strong> ${data.field_name}</p>`;
+            html += `<p><strong>Slug SQL:</strong> <code>${data.field_slug}</code></p>`;
+            html += `<p><strong>Tipo:</strong> ${data.field_type}</p>`;
+            html += `<p><strong>Requerido:</strong> ${data.is_required === '1' ? 'Sí' : 'No'}</p>`;
+            html += `<hr><p><strong>Configuración Interna (JSON):</strong></p><pre style="background:#fff; padding:10px; border:1px solid #ccc; max-height:200px; overflow:auto;">${JSON.stringify(parsedConfig, null, 2)}</pre>`;
+            
+            document.getElementById('view-var-content').innerHTML = html;
+            document.getElementById('crea-view-var-modal').style.display = 'block';
+        });
+    });
+
+    document.querySelectorAll('.crea-open-edit-var').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            var data = JSON.parse(this.dataset.config);
+            document.getElementById('edit_var_id').value = data.id;
+            document.getElementById('edit_var_name').value = data.field_name;
+            document.getElementById('edit_var_slug').value = data.field_slug;
+            document.getElementById('edit_var_type').value = data.field_type;
+            document.getElementById('edit_var_req').checked = (data.is_required === '1');
+            document.getElementById('crea-edit-var-modal').style.display = 'block';
+        });
+    });
+
+    var delStep1 = document.getElementById('crea-delete-var-step1');
+    var delStep2 = document.getElementById('crea-delete-var-step2');
+    var delInput = document.getElementById('confirm-var-delete');
+    var delBtn = document.getElementById('btn-submit-var-delete');
+
+    document.querySelectorAll('.crea-open-delete-var').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('delete_var_id').value = this.dataset.id;
+            document.getElementById('del-var-name-display').innerText = this.dataset.name;
+            delStep1.style.display = 'block';
+        });
+    });
+
+    var btnCont = document.getElementById('btn-delete-var-continue');
+    if(btnCont) {
+        btnCont.addEventListener('click', function() {
+            delStep1.style.display = 'none';
+            delInput.value = '';
+            delBtn.disabled = true;
+            delStep2.style.display = 'block';
+        });
+    }
+
+    if(delInput) {
+        delInput.addEventListener('input', function() {
+            delBtn.disabled = (this.value !== 'ELIMINAR');
+        });
+    }
+
+    document.querySelectorAll('.crea-modal-close, .crea-cancel-modal').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.crea-modal-overlay').forEach(m => m.style.display = 'none');
+        });
+    });
 });
 </script>
