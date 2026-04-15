@@ -1,8 +1,6 @@
 <?php
 /**
  * Ruta del archivo: wp-content/plugins/crea/admin/partials/builder-tabs/builder_variables.php
- *
- * ☀️ Pestaña de Variables: Diccionario de Datos con "Súper Modal" de Edición Inteligente.
  */
 if ( ! defined( 'WPINC' ) ) { die; }
 
@@ -23,7 +21,6 @@ if ($selected_base_id > 0) {
         $selected_base_name = $base_info->form_name;
         $selected_base_slug = $base_info->form_slug;
         
-        // ☀️ Contar registros físicos para la Regla de "Cero Registros"
         $physical_table = $wpdb->prefix . "crea_data_" . $selected_base_slug;
         if ($wpdb->get_var("SHOW TABLES LIKE '$physical_table'") === $physical_table) {
             $count_rows = intval($wpdb->get_var("SELECT COUNT(*) FROM $physical_table"));
@@ -33,7 +30,7 @@ if ($selected_base_id > 0) {
 
 $variables = [];
 if ($selected_base_id > 0) {
-    $variables = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_fields WHERE form_id = %d ORDER BY id ASC", $selected_base_id), ARRAY_A);
+    $variables = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_fields WHERE form_id = %d ORDER BY field_order ASC, id ASC", $selected_base_id), ARRAY_A);
 }
 
 $msg = isset($_GET['msg']) ? sanitize_text_field($_GET['msg']) : '';
@@ -112,20 +109,20 @@ $human_types = [
                             <select name="field_type" id="field_type" style="width: 100%;" required>
                                 <option value="">-- Selecciona un tipo de dato --</option>
                                 <optgroup label="Datos de Texto">
-                                    <option value="text_short">Texto Corto (Nombres, apellidos, folios)</option>
-                                    <option value="text_long">Texto Largo (Observaciones, notas clínicas)</option>
-                                    <option value="text_html">Editor HTML (Texto enriquecido con formato)</option>
+                                    <option value="text_short">Texto Corto</option>
+                                    <option value="text_long">Texto Largo</option>
+                                    <option value="text_html">Editor HTML</option>
                                 </optgroup>
                                 <optgroup label="Datos Numéricos y Temporales">
-                                    <option value="num_discrete">Numérico Discreto (Ej. Edad en años: 25, 30)</option>
-                                    <option value="num_continuous">Numérico Continuo (Ej. Talla: 1.75, Peso: 68.5)</option>
+                                    <option value="num_discrete">Numérico Discreto</option>
+                                    <option value="num_continuous">Numérico Continuo</option>
                                     <option value="date">Fecha (Calendario)</option>
                                     <option value="time">Hora</option>
                                 </optgroup>
                                 <optgroup label="Variables Categóricas (Selección)">
-                                    <option value="select">Menú Desplegable (Opción Única)</option>
-                                    <option value="radio">Botones de Radio (Opción Única visible)</option>
-                                    <option value="checkbox">Casillas de Verificación (Opción Múltiple)</option>
+                                    <option value="select">Menú Desplegable</option>
+                                    <option value="radio">Botones de Radio</option>
+                                    <option value="checkbox">Casillas de Verificación</option>
                                 </optgroup>
                                 <optgroup label="Bases Relacionales (Catálogos)">
                                     <option value="relation">Vincular con otra Base de Datos</option>
@@ -139,7 +136,6 @@ $human_types = [
                             <div id="conf_text" style="display: none;">
                                 <label style="font-weight: 600; font-size: 13px;">Límite de Caracteres Máximos:</label>
                                 <input type="number" name="text_max_length" id="text_max_length" class="regular-text" style="width: 100%; margin-top: 4px;" value="255">
-                                <span id="text_max_desc" style="font-size: 11px; color: #64748b; display: block; margin-top: 4px;">Rango sugerido: 1 a 255.</span>
                             </div>
 
                             <div id="conf_html" style="display: none;">
@@ -156,52 +152,41 @@ $human_types = [
 
                             <div id="conf_num_continuous" style="display: none;">
                                 <div style="display: flex; gap: 15px;">
-                                    <div style="flex: 1;">
-                                        <label style="font-weight: 600; font-size: 13px;">Dígitos enteros:</label>
-                                        <input type="number" name="num_cont_integers" id="num_cont_integers" class="regular-text" style="width: 100%; margin-top: 4px;" value="2" min="1" max="11">
-                                    </div>
-                                    <div style="flex: 1;">
-                                        <label style="font-weight: 600; font-size: 13px;">Decimales:</label>
-                                        <input type="number" name="num_cont_decimals" id="num_cont_decimals" class="regular-text" style="width: 100%; margin-top: 4px;" value="2" min="0" max="6">
-                                    </div>
+                                    <div style="flex: 1;"><label style="font-size: 13px;">Enteros:</label><input type="number" name="num_cont_integers" id="num_cont_integers" style="width: 100%; margin-top: 4px;" value="2" min="1" max="11"></div>
+                                    <div style="flex: 1;"><label style="font-size: 13px;">Decimales:</label><input type="number" name="num_cont_decimals" id="num_cont_decimals" style="width: 100%; margin-top: 4px;" value="2" min="0" max="6"></div>
                                 </div>
                             </div>
 
-                            <div id="conf_date" style="display: none;">
-                                <span style="font-size: 13px; color: #334155; display: block; line-height: 1.4;"><strong>Calendario Estándar:</strong> El sistema utiliza el calendario Gregoriano.</span>
-                            </div>
+                            <div id="conf_date" style="display: none;"><span style="font-size: 13px;">Calendario Estándar activo.</span></div>
 
                             <div id="conf_time" style="display: none;">
                                 <label style="font-weight: 600; font-size: 13px;">Zona Horaria de Visualización:</label>
                                 <select name="time_zone_default" style="width: 100%; margin-top: 4px;" class="crea-searchable-select">
                                     <?php echo wp_timezone_choice( wp_timezone_string() ); ?>
                                 </select>
-                                <span style="font-size: 11px; color: #64748b; display: block; margin-top: 4px;">Se guardará en UTC (GMT 0) por integridad.</span>
                             </div>
 
                             <div id="conf_categorical" style="display: none;">
                                 <label style="font-weight: 600; font-size: 13px;">Opciones Disponibles:</label>
-                                <textarea name="categorical_options" id="categorical_options" rows="5" style="width: 100%; margin-top: 4px;" placeholder="Lácteos&#10;Carnes&#10;Vegetales"></textarea>
+                                <textarea name="categorical_options" id="categorical_options" rows="5" style="width: 100%; margin-top: 4px;"></textarea>
                                 
                                 <div style="margin-top: 15px;">
-                                    <label style="font-weight: 600; font-size: 13px;">Opción(es) por defecto (Opcional):</label>
-                                    <select name="categorical_default[]" id="categorical_default" style="width: 100%; margin-top: 4px;">
-                                        <option value="">-- Ninguna por defecto --</option>
-                                    </select>
+                                    <label style="font-weight: 600; font-size: 13px;">Opción por defecto:</label>
+                                    <select name="categorical_default[]" id="categorical_default" style="width: 100%; margin-top: 4px;"></select>
                                 </div>
 
                                 <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #cbd5e1;">
                                     <label style="font-weight: 600; font-size: 13px;">Codificación Estadística (IDs):</label>
                                     <select name="categorical_id_type" id="categorical_id_type" style="width: 100%; margin-top: 4px;">
-                                        <option value="none">No codificar (Guardar texto plano)</option>
-                                        <option value="auto">Codificación Automática (1, 2, 3...)</option>
-                                        <option value="manual">Codificación Manual (Asignar códigos)</option>
+                                        <option value="none">No codificar</option>
+                                        <option value="auto">Codificación Automática</option>
+                                        <option value="manual">Codificación Manual</option>
                                     </select>
                                 </div>
 
                                 <div id="box_manual_codes" style="display: none; margin-top: 10px;">
                                     <label style="font-weight: 600; font-size: 13px; color: var(--crea-danger);">Códigos Manuales Asignados:</label>
-                                    <textarea name="categorical_manual_codes" id="categorical_manual_codes" rows="3" style="width: 100%; margin-top: 4px;" placeholder="1&#10;2&#10;88&#10;99"></textarea>
+                                    <textarea name="categorical_manual_codes" id="categorical_manual_codes" rows="3" style="width: 100%; margin-top: 4px;"></textarea>
                                     <div id="warning_manual_codes" style="display: none; margin-top: 10px; padding: 10px; background: #FEF2F2; border-left: 3px solid var(--crea-danger); color: var(--crea-danger); font-size: 12px;">
                                         <strong>⚠️ Precaución:</strong> Desfase detectado. La cantidad de opciones no coincide con la cantidad de códigos.
                                     </div>
@@ -209,26 +194,24 @@ $human_types = [
                             </div>
 
                             <div id="conf_relation" style="display: none;">
-                                <label style="font-weight: 600; font-size: 13px;">1. Selecciona la Base Maestra:</label>
+                                <label style="font-weight: 600; font-size: 13px;">1. Base Maestra:</label>
                                 <select name="rel_base_slug" id="rel_base_slug" style="width: 100%; margin-top: 4px;">
                                     <option value="">-- Elige una base --</option>
                                     <?php foreach ( $bases as $b ) : if ($b['id'] == $selected_base_id) continue; ?>
-                                        <option value="<?php echo esc_attr($b['form_slug']); ?>"><?php echo esc_html( $b['form_name'] ) . ' (' . esc_html( $b['form_slug'] ) . ')'; ?></option>
+                                        <option value="<?php echo esc_attr($b['form_slug']); ?>"><?php echo esc_html( $b['form_name'] ); ?></option>
                                     <?php endforeach; ?>
                                 </select>
                                 
                                 <div style="margin-top: 15px;">
                                     <label style="font-weight: 600; font-size: 13px;">2. Variable a extraer:</label>
-                                    <select name="rel_field_slug" id="rel_field_slug" style="width: 100%; margin-top: 4px;"><option value="">-- Selecciona primero la base --</option></select>
+                                    <input type="text" name="rel_field_slug" id="rel_field_slug" style="width: 100%;" placeholder="Slug de la variable maestra">
                                 </div>
 
                                 <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #cbd5e1;">
                                     <label style="font-weight: 600; font-size: 13px;">3. Condicional de Filtrado (Opcional):</label>
                                     <div style="display: flex; gap: 5px; align-items: center; margin-top: 4px;">
-                                        <span style="font-size: 12px;">Mostrar SÓLO SI</span>
-                                        <select name="rel_cond_field" style="width: 120px; font-size: 12px;"><option value="">(Variable)</option></select>
-                                        <span style="font-size: 12px;">=</span>
-                                        <input type="text" name="rel_cond_value" style="width: 80px; font-size: 12px;" placeholder="Valor">
+                                        <input type="text" name="rel_cond_field" id="rel_cond_field" style="width: 120px; font-size: 12px;" placeholder="Variable"> = 
+                                        <input type="text" name="rel_cond_value" id="rel_cond_value" style="width: 80px; font-size: 12px;" placeholder="Valor">
                                     </div>
                                 </div>
                             </div>
@@ -253,19 +236,24 @@ $human_types = [
                     </label>
                 </div>
                 <div class="crea-pagination"><div id="crea-vars-table-pagination-top" style="display: flex; gap: 5px;"></div></div>
-                <div class="crea-search-box" style="position: relative; width: 100%; max-width: 300px;">
-                    <span class="dashicons dashicons-search" style="position: absolute; left: 10px; top: 6px; color: inherit; opacity: 0.5;"></span>
-                    <input type="text" id="crea-search-vars" placeholder="Buscar variable..." style="width: 100%; padding: 4px 8px 4px 35px;">
+                
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <button type="button" id="btn-open-reorder" class="button button-secondary"><span class="dashicons dashicons-sort" style="margin-top:3px;"></span> Reordenar Variables</button>
+                    <div class="crea-search-box" style="position: relative; width: 100%; max-width: 200px;">
+                        <span class="dashicons dashicons-search" style="position: absolute; left: 10px; top: 6px; color: inherit; opacity: 0.5;"></span>
+                        <input type="text" id="crea-search-vars" placeholder="Buscar variable..." style="width: 100%; padding: 4px 8px 4px 35px;">
+                    </div>
                 </div>
             </div>
 
             <table id="crea-vars-table" class="crea-table" style="table-layout: auto; width: 100%; border: none;">
                 <thead>
                     <tr>
-                        <th style="width: 7%;" class="crea-sortable" data-sort-type="number">ID <span class="dashicons dashicons-sort"></span></th>
+                        <th style="width: 5%;" class="crea-sortable" data-sort-type="number">Pos. <span class="dashicons dashicons-sort"></span></th>
+                        <th style="width: 5%;" class="crea-sortable" data-sort-type="number">ID <span class="dashicons dashicons-sort"></span></th>
                         <th style="width: 25%;" class="crea-sortable" data-sort-type="string">Nombre (Etiqueta) <span class="dashicons dashicons-sort"></span></th>
                         <th style="width: 20%;" class="crea-sortable" data-sort-type="string">Slug SQL <span class="dashicons dashicons-sort"></span></th>
-                        <th style="width: 20%;" class="crea-sortable" data-sort-type="string">Tipo de Dato <span class="dashicons dashicons-sort"></span></th>
+                        <th style="width: 17%;" class="crea-sortable" data-sort-type="string">Tipo de Dato <span class="dashicons dashicons-sort"></span></th>
                         <th style="width: 10%; text-align: center;">Obligatorio</th>
                         <th style="width: 18%;">Acciones</th>
                     </tr>
@@ -273,25 +261,34 @@ $human_types = [
                 <tbody>
                     <?php if ( empty($variables) ) : ?>
                         <tr class="crea-empty-row">
-                            <td colspan="6" style="text-align:center; padding: 40px; opacity: 0.7;">
+                            <td colspan="7" style="text-align:center; padding: 40px; opacity: 0.7;">
                                 <span class="dashicons dashicons-layout" style="font-size: 40px; width: 40px; height: 40px; margin-bottom: 10px; opacity: 0.5;"></span><br>
                                 <span style="font-size: 16px;">Estructura Limpia</span><br>
                                 <span style="font-size: 13px;">Aún no has definido ninguna variable.</span>
                             </td>
                         </tr>
                     <?php else : ?>
-                        <?php foreach ($variables as $v) : 
-                            $id_format = str_pad($v['id'], 2, "0", STR_PAD_LEFT);
+                        <?php 
+                        $pos_counter = 1;
+                        foreach ($variables as $v) : 
+                            $id_format = str_pad($v['field_order'], 2, "0", STR_PAD_LEFT);
                             $tipo_legible = isset($human_types[$v['field_type']]) ? $human_types[$v['field_type']] : $v['field_type'];
                             $safe_config = esc_attr(wp_json_encode($v)); 
+                            
+                            // ☀️ ESTILOS ARREGLADOS: Solo opacidad al texto, sin fondos invasivos
+                            $text_opacity = $v['is_system'] ? 'opacity: 0.65; font-style: italic;' : '';
+                            $lock_icon = $v['is_system'] ? '<span class="dashicons dashicons-lock" style="font-size:14px; margin-right:5px;" title="Variable Interna de Sistema"></span>' : '';
                         ?>
                         <tr class="crea-data-row">
-                            <td data-label="ID" data-sort-val="<?php echo $v['id']; ?>"><strong><?php echo $id_format; ?></strong></td>
-                            <td data-label="Nombre" data-sort-val="<?php echo esc_attr($v['field_name']); ?>"><strong><?php echo esc_html($v['field_name']); ?></strong></td>
-                            <td data-label="Slug" data-sort-val="<?php echo esc_attr($v['field_slug']); ?>"><code><?php echo esc_html($v['field_slug']); ?></code></td>
-                            <td data-label="Tipo" data-sort-val="<?php echo esc_attr($tipo_legible); ?>"><?php echo esc_html($tipo_legible); ?></td>
+                            <td data-label="Pos." data-sort-val="<?php echo $v['field_order']; ?>"><span style="<?php echo $text_opacity; ?>"><strong><?php echo $pos_counter++; ?></strong></span></td>
+                            <td data-label="ID" data-sort-val="<?php echo $v['id']; ?>"><span style="<?php echo $text_opacity; ?>"><?php echo $v['id']; ?></span></td>
+                            <td data-label="Nombre" data-sort-val="<?php echo esc_attr($v['field_name']); ?>"><span style="<?php echo $text_opacity; ?>"><strong><?php echo $lock_icon . esc_html($v['field_name']); ?></strong></span></td>
+                            <td data-label="Slug" data-sort-val="<?php echo esc_attr($v['field_slug']); ?>"><code style="background: transparent; padding:0; <?php echo $text_opacity; ?>"><?php echo esc_html($v['field_slug']); ?></code></td>
+                            <td data-label="Tipo" data-sort-val="<?php echo esc_attr($tipo_legible); ?>"><span style="<?php echo $text_opacity; ?>"><?php echo esc_html($tipo_legible); ?></span></td>
                             <td data-label="Obligatorio" style="text-align: center;">
-                                <?php if ($v['is_required']) : ?>
+                                <?php if ($v['is_system']) : ?>
+                                    <span style="opacity: 0.3;">-</span>
+                                <?php elseif ($v['is_required']) : ?>
                                     <span class="dashicons dashicons-yes" style="color: #16A34A;"></span>
                                 <?php else: ?>
                                     <span class="dashicons dashicons-minus" style="opacity: 0.3;"></span>
@@ -299,14 +296,18 @@ $human_types = [
                             </td>
                             <td data-label="Acciones">
                                 <div style="display: flex; gap: 5px;">
-                                    <button type="button" class="button button-small crea-icon-btn crea-open-view-var" data-config="<?php echo $safe_config; ?>" title="Ver Configuración"><span class="dashicons dashicons-visibility"></span></button>
-                                    
-                                    <button type="button" class="button button-small crea-icon-btn crea-open-edit-var" 
-                                        data-config="<?php echo $safe_config; ?>" 
-                                        data-records="<?php echo $count_rows; ?>" 
-                                        title="Editar Configuración"><span class="dashicons dashicons-edit"></span></button>
+                                    <?php if ($v['is_system']) : ?>
+                                        <button type="button" class="button button-small" disabled title="Bloqueado por el sistema"><span class="dashicons dashicons-lock"></span></button>
+                                    <?php else : ?>
+                                        <button type="button" class="button button-small crea-icon-btn crea-open-view-var" data-config="<?php echo $safe_config; ?>" title="Ver Configuración"><span class="dashicons dashicons-visibility"></span></button>
                                         
-                                    <button type="button" class="button button-small crea-icon-btn crea-open-delete-var" style="color: var(--crea-danger); border-color: var(--crea-danger);" data-id="<?php echo $v['id']; ?>" data-name="<?php echo esc_attr($v['field_name']); ?>" title="Eliminar Variable"><span class="dashicons dashicons-trash"></span></button>
+                                        <button type="button" class="button button-small crea-icon-btn crea-open-edit-var" 
+                                            data-config="<?php echo $safe_config; ?>" 
+                                            data-records="<?php echo $count_rows; ?>" 
+                                            title="Editar Configuración"><span class="dashicons dashicons-edit"></span></button>
+                                            
+                                        <button type="button" class="button button-small crea-icon-btn crea-open-delete-var" style="color: var(--crea-danger); border-color: var(--crea-danger);" data-id="<?php echo $v['id']; ?>" data-name="<?php echo esc_attr($v['field_name']); ?>" title="Eliminar Variable"><span class="dashicons dashicons-trash"></span></button>
+                                    <?php endif; ?>
                                 </div>
                             </td>
                         </tr>
@@ -340,7 +341,7 @@ $human_types = [
 <div id="crea-edit-var-modal" class="crea-modal-overlay" style="z-index: 99999;">
     <div class="crea-modal-content" style="max-width: 800px; width: 90%;">
         <span class="dashicons dashicons-no-alt crea-modal-close"></span>
-        <h2 style="margin-top:0; border-bottom: 1px solid #E2E8F0; padding-bottom: 10px;">Editar Variable</h2>
+        <h2 style="margin-top:0; border-bottom: 1px solid #E2E8F0; padding-bottom: 10px;">Editar Variable Avanzada</h2>
         
         <div id="edit-var-warning-banner" style="background: #FFFBEB; border-left: 4px solid var(--crea-warning); padding: 10px 15px; margin-bottom: 15px; font-size: 13px; display: none;">
             <strong>Base con Registros:</strong> Esta base ya contiene datos capturados. Por seguridad, el "Slug SQL" y el "Tipo de Dato" están bloqueados para evitar corrupción de datos. Puedes modificar toda la demás configuración.
@@ -486,7 +487,7 @@ $human_types = [
                 <?php wp_nonce_field( 'crea_edit_var_action', 'crea_edit_var_nonce' ); ?>
                 <input type="hidden" name="edit_variable_advanced" value="1">
                 <button type="button" class="button crea-cancel-modal">Cancelar</button>
-                <input type="submit" class="button button-primary button-large" value="Guardar Cambios y Recodificar">
+                <input type="submit" class="button button-primary button-large" value="Guardar Cambios">
             </div>
         </form>
     </div>
@@ -524,6 +525,32 @@ $human_types = [
     </div>
 </div>
 
+<div id="crea-reorder-modal" class="crea-modal-overlay" style="z-index: 99999;">
+    <div class="crea-modal-content" style="max-width: 500px;">
+        <span class="dashicons dashicons-no-alt crea-modal-close"></span>
+        <h2 style="margin-top:0; border-bottom: 1px solid #E2E8F0; padding-bottom: 10px;">Reordenar Variables</h2>
+        <p style="font-size: 13px; color: #64748b;">Arrastra y suelta las variables para cambiar el orden exacto en que se mostrarán y exportarán. Tienes libertad total para ordenar, incluyendo los IDs de sistema.</p>
+        
+        <ul id="crea-sortable-vars" style="margin: 15px 0; padding: 0; list-style: none;">
+            <?php foreach($variables as $v): 
+                $opacity = $v['is_system'] ? 'opacity: 0.65; font-style: italic;' : '';
+                $lock_icon = $v['is_system'] ? '<span class="dashicons dashicons-lock" style="font-size:14px; margin-right:5px;" title="Sistema"></span>' : '';
+            ?>
+            <li data-id="<?php echo $v['id']; ?>" style="background: transparent; border: 1px solid var(--crea-th-bg); margin-bottom: 5px; padding: 10px; cursor: move; border-radius: 4px; display: flex; align-items: center; gap: 10px; <?php echo $opacity; ?>">
+                <span class="dashicons dashicons-menu" style="opacity: 0.5;"></span>
+                <strong><?php echo $lock_icon . esc_html($v['field_name']); ?></strong> 
+                <code style="margin-left:auto; font-size:11px; background: transparent;"><?php echo esc_html($v['field_slug']); ?></code>
+            </li>
+            <?php endforeach; ?>
+        </ul>
+        
+        <div style="margin-top: 15px; text-align: right;">
+            <button type="button" class="button crea-cancel-modal">Cancelar</button>
+            <button type="button" id="btn-save-reorder" class="button button-primary">Guardar Nuevo Orden</button>
+        </div>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     
@@ -531,8 +558,18 @@ document.addEventListener('DOMContentLoaded', function() {
         window.CreaAdmin.initDynamicTable('crea-vars-table', 'crea-search-vars', 'crea-vars-per-page');
     }
 
-    // ========== MOTOR JS DEL FORMULARIO DE CREACIÓN ========== 
-    // (Omito la repetición del código de JS de creación para ahorrar espacio, asume que está intacto igual que antes)
+    var fName = document.getElementById('field_name');
+    var fSlug = document.getElementById('field_slug');
+    if (fName && fSlug) {
+        fName.addEventListener('keyup', function() {
+            if (fSlug.getAttribute('data-manual') !== 'true') {
+                var val = this.value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+                fSlug.value = val;
+            }
+        });
+        fSlug.addEventListener('keyup', function() { this.setAttribute('data-manual', 'true'); });
+    }
+
     var fType = document.getElementById('field_type');
     var wrapConfig = document.getElementById('config_wrapper');
     if (fType) {
@@ -595,9 +632,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // ========== MOTOR JS DEL SÚPER MODAL DE EDICIÓN ========== 
-
-    // Lógica para mostrar las configuraciones correctas en el modal
+    // Modal Edit
     function applyEditTypeChange(val) {
         document.getElementById('edit_config_wrapper').style.display = 'none';
         ['edit_conf_text', 'edit_conf_html', 'edit_conf_num_discrete', 'edit_conf_num_continuous', 'edit_conf_date', 'edit_conf_time', 'edit_conf_categorical', 'edit_conf_relation'].forEach(id => document.getElementById(id).style.display = 'none');
@@ -640,7 +675,6 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('edit_box_manual_codes').style.display = (this.value === 'manual') ? 'block' : 'none';
     });
 
-    // Abrir Modal de Edición y rellenar datos JSON
     document.querySelectorAll('.crea-open-edit-var').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
@@ -654,7 +688,6 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('edit_field_type').value = data.field_type;
             document.getElementById('edit_is_required').checked = (data.is_required === '1');
             
-            // ☀️ Regla de Cero Registros
             var banner = document.getElementById('edit-var-warning-banner');
             if (records > 0) {
                 document.getElementById('edit_field_slug').setAttribute('disabled', 'disabled');
@@ -670,10 +703,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 banner.style.display = 'none';
             }
 
-            // Aplicar vista de configuración
             applyEditTypeChange(data.field_type);
 
-            // Rellenar configuraciones desde el JSON
             if (parsedConfig) {
                 if (parsedConfig.max_length) document.getElementById('edit_text_max_length').value = parsedConfig.max_length;
                 if (parsedConfig.digits) document.getElementById('edit_num_disc_digits').value = parsedConfig.digits;
@@ -684,7 +715,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (parsedConfig.options) {
                     var txtOptions = document.getElementById('edit_categorical_options');
                     txtOptions.value = parsedConfig.options;
-                    // Forzar trigger input para llenar el select default
                     txtOptions.dispatchEvent(new Event('input'));
                     
                     if (parsedConfig.default && parsedConfig.default.length > 0) {
@@ -711,7 +741,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Ver y Eliminar (Lógica estándar intacta)
     document.querySelectorAll('.crea-open-view-var').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
@@ -764,5 +793,60 @@ document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.crea-modal-overlay').forEach(m => m.style.display = 'none');
         });
     });
+
+    // ☀️ MOTOR JS DRAG & DROP (Libre para todas las variables)
+    if (jQuery('#crea-sortable-vars').length) {
+        jQuery('#crea-sortable-vars').sortable({
+            placeholder: "ui-state-highlight",
+            cursor: "move"
+        });
+        jQuery('#crea-sortable-vars').disableSelection();
+    }
+
+    var btnOpenReorder = document.getElementById('btn-open-reorder');
+    if (btnOpenReorder) {
+        btnOpenReorder.addEventListener('click', function(e){
+            e.preventDefault();
+            document.getElementById('crea-reorder-modal').style.display = 'block';
+        });
+    }
+
+    var btnSaveReorder = document.getElementById('btn-save-reorder');
+    if (btnSaveReorder) {
+        btnSaveReorder.addEventListener('click', function(e){
+            e.preventDefault();
+            var btn = this;
+            btn.disabled = true;
+            btn.innerText = 'Guardando...';
+            
+            var order = [];
+            document.querySelectorAll('#crea-sortable-vars li').forEach(function(li){
+                order.push(li.getAttribute('data-id'));
+            });
+            
+            jQuery.ajax({
+                url: crea_ajax_obj.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'crea_reorder_vars',
+                    security: crea_ajax_obj.nonce,
+                    base_id: <?php echo esc_attr($selected_base_id); ?>,
+                    order: order
+                },
+                success: function(response) {
+                    if(response.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Error: ' + response.data);
+                        btn.disabled = false;
+                        btn.innerText = 'Guardar Nuevo Orden';
+                    }
+                }
+            });
+        });
+    }
 });
 </script>
+<style>
+.ui-state-highlight { height: 40px; background: transparent; border: 1px dashed #94a3b8; border-radius: 4px; margin-bottom: 5px; }
+</style>
