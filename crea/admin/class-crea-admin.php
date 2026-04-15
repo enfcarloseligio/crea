@@ -25,7 +25,6 @@ class CREA_Admin {
 		wp_send_json( array( 'exists' => (bool) $exists, 'sanitized' => $slug ) );
 	}
 
-	// ☀️ MOTOR AJAX DE ORDENAMIENTO (Ahora obedece 100% al frontend)
 	public function ajax_reorder_vars() {
 		check_ajax_referer( 'crea_ajax_nonce', 'security' );
 		if (!current_user_can('manage_options')) wp_send_json_error('Permisos insuficientes.');
@@ -40,7 +39,6 @@ class CREA_Admin {
 		$pos = 10; 
 		foreach ($order as $var_id) {
 			$var_id = intval($var_id);
-			// Actualiza la posición de la variable (sea normal o de sistema) según el orden exacto enviado
 			$wpdb->update($table_fields, ['field_order' => $pos], ['id' => $var_id]);
 			$pos += 10;
 		}
@@ -91,6 +89,17 @@ class CREA_Admin {
 			'username' => $current_wp_user->user_login,
 			'name'     => $current_wp_user->display_name
 		);
+
+		// DICCIONARIO DE TRADUCCIÓN PARA AUDITORÍA DINÁMICA
+		$config_labels = [
+			'max_length' => 'Caracteres Máximos', 'digits' => 'Dígitos Enteros',
+			'integers' => 'Dígitos Enteros', 'decimals' => 'Decimales',
+			'time_zone' => 'Zona Horaria', 'options' => 'Opciones de Catálogo',
+			'default' => 'Selección por Defecto', 'id_type' => 'Tipo de Codificación',
+			'manual_codes' => 'Códigos Manuales', 'rel_base' => 'Base Maestra',
+			'rel_field' => 'Variable a Extraer', 'rel_cond_field' => 'Campo Condicional',
+			'rel_cond_value' => 'Valor Condicional'
+		];
 
 		if ( isset($_GET['crea_export']) && isset($_GET['base_slug']) && current_user_can('manage_options') ) {
 			$selected_slug = sanitize_text_field($_GET['base_slug']);
@@ -310,6 +319,8 @@ class CREA_Admin {
 			];
 
 			$config = [];
+			
+			// ☀️ AUDITORÍA EXPLÍCITA Y DINÁMICA
 			$diff = [
 				'Nombre Variable' => ['old' => 'N/A', 'new' => $field_name],
 				'Slug SQL (Columna)' => ['old' => 'N/A', 'new' => $field_slug],
@@ -319,44 +330,33 @@ class CREA_Admin {
 
 			if (in_array($field_type, ['text_short', 'text_long'])) {
 				$config['max_length'] = intval($_POST['text_max_length']);
-				$diff['Caracteres Máximos'] = ['old' => 'N/A', 'new' => $config['max_length']];
 			} elseif ($field_type === 'num_discrete') {
 				$config['digits'] = intval($_POST['num_disc_digits']);
-				$diff['Máx. Dígitos Enteros'] = ['old' => 'N/A', 'new' => $config['digits']];
 			} elseif ($field_type === 'num_continuous') {
 				$config['integers'] = intval($_POST['num_cont_integers']);
 				$config['decimals'] = intval($_POST['num_cont_decimals']);
-				$diff['Máx. Enteros'] = ['old' => 'N/A', 'new' => $config['integers']];
-				$diff['Máx. Decimales'] = ['old' => 'N/A', 'new' => $config['decimals']];
 			} elseif ($field_type === 'time') {
 				$config['time_zone'] = sanitize_text_field($_POST['time_zone_default']);
-				$diff['Zona Horaria'] = ['old' => 'N/A', 'new' => $config['time_zone'] === 'utc' ? 'UTC Absoluta' : 'Local del Sistema'];
 			} elseif (in_array($field_type, ['select', 'radio', 'checkbox'])) {
 				$config['options'] = sanitize_textarea_field($_POST['categorical_options']);
 				$config['default'] = isset($_POST['categorical_default']) ? array_map('sanitize_text_field', $_POST['categorical_default']) : [];
 				$config['id_type'] = sanitize_text_field($_POST['categorical_id_type']);
-				
-				$diff['Opciones de Catálogo'] = ['old' => 'N/A', 'new' => str_replace("\n", ", ", $config['options'])];
-				$diff['Selección por Defecto'] = ['old' => 'N/A', 'new' => empty($config['default']) ? 'Ninguna' : implode(", ", $config['default'])];
-				
-				$id_labels = ['none' => 'Texto Plano (Sin IDs)', 'auto' => 'Automática (1, 2, 3...)', 'manual' => 'Manual (Definida por usuario)'];
-				$diff['Codificación (Estadística)'] = ['old' => 'N/A', 'new' => $id_labels[$config['id_type']]];
-
 				if ($config['id_type'] === 'manual') {
 					$config['manual_codes'] = sanitize_textarea_field($_POST['categorical_manual_codes']);
-					$diff['Códigos Manuales Asignados'] = ['old' => 'N/A', 'new' => str_replace("\n", ", ", $config['manual_codes'])];
 				}
 			} elseif ($field_type === 'relation') {
 				$config['rel_base'] = sanitize_text_field($_POST['rel_base_slug']);
 				$config['rel_field'] = sanitize_text_field($_POST['rel_field_slug']);
 				$config['rel_cond_field'] = sanitize_text_field($_POST['rel_cond_field']);
 				$config['rel_cond_value'] = sanitize_text_field($_POST['rel_cond_value']);
+			}
 
-				$diff['Base Maestra Vinculada'] = ['old' => 'N/A', 'new' => empty($config['rel_base']) ? 'Ninguna' : $config['rel_base']];
-				$diff['Variable a Extraer'] = ['old' => 'N/A', 'new' => empty($config['rel_field']) ? 'Ninguna' : $config['rel_field']];
-				if (!empty($config['rel_cond_field'])) {
-					$diff['Condición de Filtrado'] = ['old' => 'N/A', 'new' => "SÓLO SI " . $config['rel_cond_field'] . " = " . $config['rel_cond_value']];
-				}
+			// Inyectar config formateado en el diff dinámicamente
+			foreach($config as $k => $v) {
+				$lbl = isset($config_labels[$k]) ? $config_labels[$k] : ucwords(str_replace('_', ' ', $k));
+				if (is_array($v)) $v = empty($v) ? 'Ninguna' : implode(", ", $v);
+				$v = str_replace("\n", ", ", (string)$v);
+				$diff[$lbl] = ['old' => 'N/A', 'new' => ($v === '') ? 'Vacío' : $v];
 			}
 
 			$max_order = $wpdb->get_var($wpdb->prepare("SELECT MAX(field_order) FROM $table_fields WHERE form_id = %d", $base_id));
@@ -385,6 +385,9 @@ class CREA_Admin {
 					'parent_slug' => $field_slug, 'field_order' => $next_order + 1, 'created_by' => $current_user_id,
 					'updated_by' => $current_user_id, 'created_at' => $current_time, 'updated_at' => $current_time
 				]);
+				
+				// ☀️ Auditoría explícita de la hija
+				$diff['Columna de Sistema (ID)'] = ['old' => 'N/A', 'new' => 'Generada automáticamente (id_'.$field_slug.')'];
 			}
 
 			$physical_table = $wpdb->prefix . "crea_data_" . $base_info->form_slug;
@@ -472,18 +475,41 @@ class CREA_Admin {
 			}
 
 			$new_config_json = wp_json_encode($config);
+			$human_types = ['text_short'=>'Texto Corto', 'text_long'=>'Texto Largo', 'text_html'=>'Editor HTML', 'num_discrete'=>'Numérico Discreto', 'num_continuous'=>'Numérico Continuo', 'date'=>'Fecha', 'time'=>'Hora', 'select'=>'Menú Desplegable', 'radio'=>'Botones de Radio', 'checkbox'=>'Casillas Múltiples', 'relation'=>'Base Relacional'];
 
 			$diff = [];
 			if ($old_field['field_name'] !== $new_name) $diff['Nombre Variable'] = ['old' => $old_field['field_name'], 'new' => $new_name];
 			if ($old_field['field_slug'] !== $new_slug) $diff['Slug SQL'] = ['old' => $old_field['field_slug'], 'new' => $new_slug];
-			if ($old_field['field_type'] !== $new_type) $diff['Tipo de Dato'] = ['old' => $old_field['field_type'], 'new' => $new_type];
+			if ($old_field['field_type'] !== $new_type) {
+				$old_t = isset($human_types[$old_field['field_type']]) ? $human_types[$old_field['field_type']] : $old_field['field_type'];
+				$new_t = isset($human_types[$new_type]) ? $human_types[$new_type] : $new_type;
+				$diff['Tipo de Dato'] = ['old' => $old_t, 'new' => $new_t];
+			}
 			if ($old_field['is_required'] != $new_req) $diff['Dato Obligatorio'] = ['old' => $old_field['is_required'] ? 'Sí' : 'No', 'new' => $new_req ? 'Sí' : 'No'];
-			if ($old_field['config'] !== $new_config_json) $diff['Configuración JSON'] = ['old' => 'Configuración Anterior', 'new' => 'Nueva Configuración Aplicada'];
+			
+			// ☀️ COMPARACIÓN DINÁMICA DE CONFIGURACIONES JSON (Desglose exacto)
+			$old_conf_arr = json_decode($old_field['config'], true) ?: [];
+			$all_keys = array_unique(array_merge(array_keys($old_conf_arr), array_keys($config)));
+			
+			foreach($all_keys as $k) {
+				$v_old = isset($old_conf_arr[$k]) ? $old_conf_arr[$k] : '';
+				$v_new = isset($config[$k]) ? $config[$k] : '';
+				
+				if (is_array($v_old)) $v_old = empty($v_old) ? 'Ninguna' : implode(", ", $v_old);
+				if (is_array($v_new)) $v_new = empty($v_new) ? 'Ninguna' : implode(", ", $v_new);
+				
+				$v_old = str_replace("\n", ", ", (string)$v_old);
+				$v_new = str_replace("\n", ", ", (string)$v_new);
+				
+				if ($v_old !== $v_new) {
+					$lbl = isset($config_labels[$k]) ? $config_labels[$k] : ucwords(str_replace('_', ' ', $k));
+					$diff[$lbl] = ['old' => ($v_old === '') ? 'Vacío' : $v_old, 'new' => ($v_new === '') ? 'Vacío' : $v_new];
+				}
+			}
 
 			if (!empty($diff)) {
 				if ($count_rows == 0) {
-					$old_config_arr = json_decode($old_field['config'], true);
-					$old_id_type = isset($old_config_arr['id_type']) ? $old_config_arr['id_type'] : 'none';
+					$old_id_type = isset($old_conf_arr['id_type']) ? $old_conf_arr['id_type'] : 'none';
 					$new_id_type = isset($config['id_type']) ? $config['id_type'] : 'none';
 
 					$sql_type = "TEXT";
@@ -504,6 +530,8 @@ class CREA_Admin {
 					if ($new_id_type === 'none' && in_array($old_id_type, ['auto', 'manual'])) {
 						$wpdb->query("ALTER TABLE $physical_table DROP COLUMN $twin_slug_old");
 						$wpdb->delete($table_fields, ['parent_slug' => $old_field['field_slug'], 'form_id' => $base_id]);
+						// ☀️ Auditoría
+						$diff['Columna de Sistema (ID)'] = ['old' => 'Activa ('.$twin_slug_old.')', 'new' => 'Eliminada permanentemente por cambio de codificación'];
 					} 
 					elseif ($old_id_type === 'none' && in_array($new_id_type, ['auto', 'manual'])) {
 						$twin_sql_type = ($new_id_type === 'auto') ? 'INT' : 'VARCHAR(255)';
@@ -517,6 +545,8 @@ class CREA_Admin {
 							'field_order' => $old_field['field_order'] + 1, 'created_by' => $current_user_id, 'updated_by' => $current_user_id,
 							'created_at' => $current_time, 'updated_at' => $current_time
 						]);
+						// ☀️ Auditoría
+						$diff['Columna de Sistema (ID)'] = ['old' => 'N/A', 'new' => 'Generada automáticamente ('.$twin_slug_new.')'];
 					}
 					elseif (in_array($old_id_type, ['auto', 'manual']) && in_array($new_id_type, ['auto', 'manual'])) {
 						$twin_sql_type = ($new_id_type === 'auto') ? 'INT' : 'VARCHAR(255)';
@@ -558,19 +588,23 @@ class CREA_Admin {
 			$physical_table = $wpdb->prefix . "crea_data_" . $base_info->form_slug;
 			$field_slug = $old_field['field_slug'];
 			
+			$diff = [ 'Destrucción de Estructura' => ['old' => 'Columna Activa (' . $old_field['field_name'] . ')', 'new' => 'Columna SQL Eliminada Permanentemente'] ];
+
 			$col_check = $wpdb->get_results("SHOW COLUMNS FROM $physical_table LIKE '$field_slug'");
 			if (!empty($col_check)) {
 				$wpdb->query("ALTER TABLE $physical_table DROP COLUMN $field_slug");
+				
 				$col_id_check = $wpdb->get_results("SHOW COLUMNS FROM $physical_table LIKE 'id_$field_slug'");
 				if (!empty($col_id_check)) {
 					$wpdb->query("ALTER TABLE $physical_table DROP COLUMN id_$field_slug");
+					// ☀️ Auditoría
+					$diff['Columna de Sistema (ID)'] = ['old' => 'Activa (id_'.$field_slug.')', 'new' => 'Eliminada permanentemente en conjunto con la principal'];
 				}
 			}
 			
 			$wpdb->delete($table_fields, ['id' => $var_id], ['%d']);
 			$wpdb->delete($table_fields, ['parent_slug' => $field_slug, 'form_id' => $base_id]);
 			
-			$diff = [ 'Destrucción de Estructura' => ['old' => 'Columna Activa (' . $old_field['field_name'] . ')', 'new' => 'Columna SQL Eliminada Permanentemente'] ];
 			$log_payload = array('user' => $user_snapshot, 'base_slug' => $base_info->form_slug, 'base_name' => $base_info->form_name, 'diff' => $diff);
 			
 			$wpdb->insert( $table_audit, array('form_id' => $base_id, 'action_type' => 'delete_col', 'changes_json' => wp_json_encode($log_payload), 'user_id' => $current_user_id, 'created_at' => $current_time) );
@@ -609,7 +643,7 @@ class CREA_Admin {
 		wp_enqueue_style( 'wp-color-picker' );
 		wp_enqueue_style( 'select2', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css', array(), '4.1.0' );
 		wp_enqueue_script( 'select2', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js', array('jquery'), '4.1.0', true );
-		wp_enqueue_script( 'jquery-ui-sortable' ); // ☀️ Necesario para Drag & Drop
+		wp_enqueue_script( 'jquery-ui-sortable' );
 		wp_enqueue_style( $this->plugin_name . '-admin-css', CREA_URL . 'admin/assets/css/crea-admin.css', array(), CREA_VERSION, 'all' );
 		
 		$default_admin_colors = [ 'th_bg' => '#F8FAFC', 'th_text' => '#0F172A', 'odd_bg' => '#FFFFFF', 'odd_text' => '#475569', 'even_bg' => '#F1F5F9', 'even_text' => '#475569' ];
