@@ -1,13 +1,13 @@
 <?php
 /**
- * Ruta del archivo: wp-content/plugins/crea/includes/shortcodes/views/view-form.php
- * Interfaz Frontend: Perfil Capturista [crea_table_ar_{id}]
+ * Archivo: wp-content/plugins/crea/includes/shortcodes/views/view-form.php
+ * Descripción: Interfaz gráfica para la captura de registros (Contexto de shortcode).
  */
 if ( ! defined( 'WPINC' ) ) { die; }
 ?>
 
 <style>
-	/* CONTENEDOR PRINCIPAL: Hereda tipografía del tema */
+	/* Herencia de estilos estructurales */
 	.crea-frontend-wrapper {
 		background: transparent;
 		font-family: inherit;
@@ -15,6 +15,7 @@ if ( ! defined( 'WPINC' ) ) { die; }
 		margin-bottom: 40px;
 	}
 
+	/* Encabezado del formulario */
 	.crea-frontend-header {
 		margin-bottom: 25px;
 		border-bottom: 2px solid rgba(0,0,0,0.05);
@@ -23,17 +24,28 @@ if ( ! defined( 'WPINC' ) ) { die; }
 	.crea-frontend-header h2 { margin: 0 0 8px 0; font-size: 1.6em; }
 	.crea-frontend-header p { margin: 0; opacity: 0.75; font-size: 0.95em; line-height: 1.5; }
 	
-	/* ☀️ GRID RESPONSIVO DINÁMICO */
+	/* Indicadores de retroalimentación */
+	.crea-success-banner {
+		background-color: #dcfce7;
+		border-left: 4px solid #22c55e;
+		color: #166534;
+		padding: 15px 20px;
+		margin-bottom: 25px;
+		border-radius: 4px;
+		font-size: 0.95em;
+	}
+
+	/* Cuadrícula responsiva (CSS Grid) */
 	.crea-form-grid {
 		display: grid;
 		grid-template-columns: repeat(3, 1fr);
 		gap: 20px 25px;
 	}
 
-	/* Excepción para Textos Largos / Editores */
+	/* Utilidad para abarcar el ancho completo del contenedor */
 	.crea-col-span-full { grid-column: 1 / -1; }
 
-	/* COMPONENTES DEL FORMULARIO */
+	/* Componentes de entrada */
 	.crea-field-group {
 		display: flex;
 		flex-direction: column;
@@ -72,24 +84,12 @@ if ( ! defined( 'WPINC' ) ) { die; }
 		outline: none;
 	}
 
-	/* Opciones Categóricas (Radio y Checkbox) */
-	.crea-cat-group {
-		display: flex;
-		flex-direction: column;
-		gap: 8px;
-		margin-top: 4px;
-	}
-	.crea-cat-group label {
-		font-weight: normal;
-		font-size: 0.95em;
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		cursor: pointer;
-	}
+	/* Estilos para selecciones categóricas */
+	.crea-cat-group { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+	.crea-cat-group label { font-weight: normal; font-size: 0.95em; display: flex; align-items: center; gap: 8px; cursor: pointer; }
 	.crea-cat-group input { margin: 0 !important; cursor: pointer; }
 
-	/* Botonera */
+	/* Controles de acción */
 	.crea-form-actions {
 		margin-top: 30px;
 		padding-top: 20px;
@@ -109,17 +109,19 @@ if ( ! defined( 'WPINC' ) ) { die; }
 	}
 	.crea-btn-submit:hover { opacity: 0.9; }
 
-	/* MEDIA QUERIES */
-	@media (max-width: 992px) {
-		.crea-form-grid { grid-template-columns: repeat(2, 1fr); }
-	}
-	@media (max-width: 600px) {
-		.crea-form-grid { grid-template-columns: 1fr; }
-	}
+	/* Reglas de responsividad (Breakpoints) */
+	@media (max-width: 992px) { .crea-form-grid { grid-template-columns: repeat(2, 1fr); } }
+	@media (max-width: 600px) { .crea-form-grid { grid-template-columns: 1fr; } }
 </style>
 
 <div class="crea-frontend-wrapper">
 	
+	<?php if ( isset($_GET['crea_msg']) && $_GET['crea_msg'] === 'success' ) : ?>
+		<div class="crea-success-banner">
+			<strong>Aviso del sistema:</strong> El registro se ha procesado y almacenado correctamente.
+		</div>
+	<?php endif; ?>
+
 	<div class="crea-frontend-header">
 		<h2><?php echo esc_html( $form['form_name'] ); ?></h2>
 		<?php if(!empty($form['description'])): ?>
@@ -137,10 +139,10 @@ if ( ! defined( 'WPINC' ) ) { die; }
 			foreach ( $fields as $field ) : 
 				$config = json_decode($field['config'], true) ?: [];
 				$is_req = $field['is_required'] ? 'required' : '';
-				$req_mark = $field['is_required'] ? '<span class="crea-req-mark" title="Obligatorio">*</span>' : '';
+				$req_mark = $field['is_required'] ? '<span class="crea-req-mark" title="Campo obligatorio">*</span>' : '';
 				$name_attr = 'crea_data[' . esc_attr($field['field_slug']) . ']';
 				
-				// ☀️ REGLA DE EXPANSIÓN HORIZONTAL
+				// Asignación de clase estructural según la longitud de captura requerida
 				$wrapper_class = 'crea-field-group';
 				if ( in_array($field['field_type'], ['text_long', 'text_html']) ) {
 					$wrapper_class .= ' crea-col-span-full';
@@ -185,15 +187,14 @@ if ( ! defined( 'WPINC' ) ) { die; }
 						break;
 
 					case 'text_html':
-						// Temporalmente como textarea, lo evolucionaremos a editor rico si lo necesitas
-						echo '<textarea name="'.$name_attr.'" id="'.esc_attr($field['field_slug']).'" rows="8" '.$is_req.' placeholder="Admite formato HTML..."></textarea>';
+						echo '<textarea name="'.$name_attr.'" id="'.esc_attr($field['field_slug']).'" rows="8" '.$is_req.'></textarea>';
 						break;
 
 					case 'select':
 						$options = isset($config['options']) ? explode("\n", $config['options']) : [];
 						$defaults = isset($config['default']) && is_array($config['default']) ? $config['default'] : [];
 						echo '<select name="'.$name_attr.'" id="'.esc_attr($field['field_slug']).'" '.$is_req.'>';
-						echo '<option value="">-- Selecciona una opción --</option>';
+						echo '<option value="">-- Seleccionar --</option>';
 						foreach($options as $opt) {
 							$opt = trim($opt);
 							if(empty($opt)) continue;
@@ -233,7 +234,7 @@ if ( ! defined( 'WPINC' ) ) { die; }
 						
 					case 'relation':
 						echo '<select name="'.$name_attr.'" id="'.esc_attr($field['field_slug']).'" '.$is_req.'>';
-						echo '<option value="">-- Buscar en catálogo ('.esc_html($config['rel_base']).') --</option>';
+						echo '<option value="">-- Consultar catálogo ('.esc_html($config['rel_base']).') --</option>';
 						echo '</select>';
 						break;
 				}
@@ -243,7 +244,7 @@ if ( ! defined( 'WPINC' ) ) { die; }
 		</div>
 
 		<div class="crea-form-actions">
-			<button type="submit" class="crea-btn-submit">Guardar y Enviar Registro</button>
+			<button type="submit" class="crea-btn-submit">Guardar Registro</button>
 		</div>
 	</form>
 </div>

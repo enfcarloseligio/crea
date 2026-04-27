@@ -135,60 +135,81 @@ $human_types = [
                             
                             <div id="conf_text" style="display: none;">
                                 <label style="font-weight: 600; font-size: 13px;">Límite de Caracteres Máximos:</label>
-                                <input type="number" name="text_max_length" id="text_max_length" class="regular-text" style="width: 100%; margin-top: 4px;" value="255">
+                                <input type="number" name="text_max_length" id="text_max_length" class="regular-text" style="width: 100%; margin-top: 4px;" value="255" min="1">
+                                <span id="desc_text_short" style="font-size: 11px; color: #64748b; display: none; margin-top: 4px;">Rango estricto admitido: <strong>1 a 255</strong> caracteres (Ideal para nombres, folios, identificadores).</span>
+                                <span id="desc_text_long" style="font-size: 11px; color: #64748b; display: none; margin-top: 4px;">Rango estricto admitido: <strong>500 a 5000</strong> caracteres (Ideal para notas clínicas o descripciones extensas).</span>
                             </div>
 
                             <div id="conf_html" style="display: none;">
                                 <span style="font-size: 13px; color: #334155; display: block; line-height: 1.4;">
                                     <strong>Capacidad Extendida:</strong> El formato HTML requiere espacio adicional para guardar etiquetas de estilo.<br>
-                                    <span style="color: #64748b; font-size: 12px; margin-top: 5px; display: inline-block;">Límite técnico: 65,535 caracteres (Aprox. 15 a 20 hojas de texto).</span>
+                                    <span style="color: #64748b; font-size: 12px; margin-top: 5px; display: inline-block;">Límite técnico máximo soportado: 65,535 caracteres (Aprox. 15 a 20 cuartillas).</span>
                                 </span>
                             </div>
 
                             <div id="conf_num_discrete" style="display: none;">
                                 <label style="font-weight: 600; font-size: 13px;">Máximo de dígitos enteros permitidos:</label>
-                                <input type="number" name="num_disc_digits" id="num_disc_digits" class="regular-text" style="width: 100%; margin-top: 4px;" value="2" min="1" max="11">
+                                <input type="number" name="num_disc_digits" id="num_disc_digits" class="regular-text" style="width: 100%; margin-top: 4px;" value="2" min="1" max="20">
+                                <span style="font-size: 11px; color: #64748b; display: block; margin-top: 4px;">Rango estricto admitido: <strong>1 a 20 dígitos</strong>. Soporta arquitectura Big Data (millones de millones) para conteos genómicos o poblacionales.</span>
                             </div>
 
                             <div id="conf_num_continuous" style="display: none;">
                                 <div style="display: flex; gap: 15px;">
-                                    <div style="flex: 1;"><label style="font-size: 13px;">Enteros:</label><input type="number" name="num_cont_integers" id="num_cont_integers" style="width: 100%; margin-top: 4px;" value="2" min="1" max="11"></div>
-                                    <div style="flex: 1;"><label style="font-size: 13px;">Decimales:</label><input type="number" name="num_cont_decimals" id="num_cont_decimals" style="width: 100%; margin-top: 4px;" value="2" min="0" max="6"></div>
+                                    <div style="flex: 1;">
+                                        <label style="font-size: 13px; font-weight: 600;">Enteros:</label>
+                                        <input type="number" name="num_cont_integers" id="num_cont_integers" style="width: 100%; margin-top: 4px;" value="2" min="1" max="20">
+                                        <span style="font-size: 11px; color: #64748b; display: block; margin-top: 4px;">Rango admitido: 1 a 20.</span>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <label style="font-size: 13px; font-weight: 600;">Decimales:</label>
+                                        <input type="number" name="num_cont_decimals" id="num_cont_decimals" style="width: 100%; margin-top: 4px;" value="8" min="0" max="20">
+                                        <span style="font-size: 11px; color: #64748b; display: block; margin-top: 4px;">Rango admitido: 0 a 20.</span>
+                                    </div>
                                 </div>
+                                <span style="font-size: 11px; color: #64748b; display: block; margin-top: 8px;"><strong>Alta Precisión:</strong> Soporta hasta 20 enteros y 20 decimales. Ideal para registros de ADN, farmacología o química analítica.</span>
                             </div>
 
-                            <div id="conf_date" style="display: none;"><span style="font-size: 13px;">Calendario Estándar activo.</span></div>
+                            <div id="conf_date" style="display: none;">
+                                <span style="font-size: 13px; color: #334155; display: block; line-height: 1.4;">
+                                    <strong>Calendario Estándar:</strong> El sistema utiliza el <strong>Calendario Gregoriano</strong>. Los datos se almacenarán internamente en formato estructurado estandarizado (YYYY-MM-DD) para facilitar el análisis temporal.
+                                </span>
+                            </div>
 
                             <div id="conf_time" style="display: none;">
                                 <label style="font-weight: 600; font-size: 13px;">Zona Horaria de Visualización:</label>
                                 <select name="time_zone_default" style="width: 100%; margin-top: 4px;" class="crea-searchable-select">
                                     <?php echo wp_timezone_choice( wp_timezone_string() ); ?>
                                 </select>
+                                <span style="font-size: 11px; color: #64748b; display: block; margin-top: 4px;">
+                                    El sistema almacenará la hora internamente en <strong>UTC (GMT 0)</strong> para garantizar la integridad analítica de los datos. La zona horaria seleccionada aquí solo se utilizará para renderizar visualmente los datos.
+                                </span>
                             </div>
 
                             <div id="conf_categorical" style="display: none;">
                                 <label style="font-weight: 600; font-size: 13px;">Opciones Disponibles:</label>
                                 <textarea name="categorical_options" id="categorical_options" rows="5" style="width: 100%; margin-top: 4px;"></textarea>
+                                <span style="font-size: 11px; color: #64748b; display: block; margin-top: 4px;">Ingrese <strong>una opción por línea</strong>. Evite dejar líneas en blanco intermedias.</span>
                                 
                                 <div style="margin-top: 15px;">
-                                    <label style="font-weight: 600; font-size: 13px;">Opción por defecto:</label>
+                                    <label style="font-weight: 600; font-size: 13px;">Opción por defecto (Opcional):</label>
                                     <select name="categorical_default[]" id="categorical_default" style="width: 100%; margin-top: 4px;"></select>
                                 </div>
 
                                 <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #cbd5e1;">
                                     <label style="font-weight: 600; font-size: 13px;">Codificación Estadística (IDs):</label>
                                     <select name="categorical_id_type" id="categorical_id_type" style="width: 100%; margin-top: 4px;">
-                                        <option value="none">No codificar</option>
-                                        <option value="auto">Codificación Automática</option>
-                                        <option value="manual">Codificación Manual</option>
+                                        <option value="none">No codificar (Guardar en texto plano)</option>
+                                        <option value="auto">Codificación Automática (Secuencial 1, 2, 3...)</option>
+                                        <option value="manual">Codificación Manual (Asignación libre)</option>
                                     </select>
                                 </div>
 
                                 <div id="box_manual_codes" style="display: none; margin-top: 10px;">
                                     <label style="font-weight: 600; font-size: 13px; color: var(--crea-danger);">Códigos Manuales Asignados:</label>
                                     <textarea name="categorical_manual_codes" id="categorical_manual_codes" rows="3" style="width: 100%; margin-top: 4px;"></textarea>
+                                    <span style="font-size: 11px; color: #64748b; display: block; margin-top: 4px;">Ingrese un código en cada línea, respetando el orden exacto de las opciones definidas arriba. Admite valores alfanuméricos (Ej. <code>1</code>, <code>99</code>, <code>CVE_01</code>).</span>
                                     <div id="warning_manual_codes" style="display: none; margin-top: 10px; padding: 10px; background: #FEF2F2; border-left: 3px solid var(--crea-danger); color: var(--crea-danger); font-size: 12px;">
-                                        <strong>⚠️ Precaución:</strong> Desfase detectado. La cantidad de opciones no coincide con la cantidad de códigos.
+                                        <strong>Alerta del Sistema:</strong> Existe un desfase. La cantidad de códigos declarados no coincide con el total de opciones.
                                     </div>
                                 </div>
                             </div>
@@ -275,7 +296,6 @@ $human_types = [
                             $tipo_legible = isset($human_types[$v['field_type']]) ? $human_types[$v['field_type']] : $v['field_type'];
                             $safe_config = esc_attr(wp_json_encode($v)); 
                             
-                            // ☀️ ESTILOS ARREGLADOS: Solo opacidad al texto, sin fondos invasivos
                             $text_opacity = $v['is_system'] ? 'opacity: 0.65; font-style: italic;' : '';
                             $lock_icon = $v['is_system'] ? '<span class="dashicons dashicons-lock" style="font-size:14px; margin-right:5px;" title="Variable Interna de Sistema"></span>' : '';
                         ?>
@@ -344,7 +364,7 @@ $human_types = [
         <h2 style="margin-top:0; border-bottom: 1px solid #E2E8F0; padding-bottom: 10px;">Editar Variable Avanzada</h2>
         
         <div id="edit-var-warning-banner" style="background: #FFFBEB; border-left: 4px solid var(--crea-warning); padding: 10px 15px; margin-bottom: 15px; font-size: 13px; display: none;">
-            <strong>Base con Registros:</strong> Esta base ya contiene datos capturados. Por seguridad, el "Slug SQL" y el "Tipo de Dato" están bloqueados para evitar corrupción de datos. Puedes modificar toda la demás configuración.
+            <strong>Base con Registros:</strong> Esta base ya contiene datos capturados. Por seguridad, el "Slug SQL" y el "Tipo de Dato" están bloqueados para evitar corrupción de datos. Puede modificar las configuraciones complementarias.
         </div>
 
         <form method="post" action="" id="crea-edit-variable-form">
@@ -405,37 +425,60 @@ $human_types = [
                         
                         <div id="edit_conf_text" style="display: none;">
                             <label style="font-weight: 600; font-size: 13px;">Límite de Caracteres Máximos:</label>
-                            <input type="number" name="edit_text_max_length" id="edit_text_max_length" class="regular-text" style="width: 100%; margin-top: 4px;">
+                            <input type="number" name="edit_text_max_length" id="edit_text_max_length" class="regular-text" style="width: 100%; margin-top: 4px;" min="1">
+                            <span id="edit_desc_text_short" style="font-size: 11px; color: #64748b; display: none; margin-top: 4px;">Rango estricto admitido: <strong>1 a 255</strong> caracteres (Ideal para nombres, folios, identificadores).</span>
+                            <span id="edit_desc_text_long" style="font-size: 11px; color: #64748b; display: none; margin-top: 4px;">Rango estricto admitido: <strong>500 a 5000</strong> caracteres (Ideal para notas clínicas o descripciones extensas).</span>
                         </div>
 
                         <div id="edit_conf_html" style="display: none;">
-                            <span style="font-size: 13px; color: #334155;">Capacidad Extendida activa (hasta 65,535 caracteres).</span>
+                            <span style="font-size: 13px; color: #334155; display: block; line-height: 1.4;">
+                                <strong>Capacidad Extendida:</strong> El formato HTML requiere espacio adicional para guardar etiquetas de estilo.<br>
+                                <span style="color: #64748b; font-size: 12px; margin-top: 5px; display: inline-block;">Límite técnico máximo soportado: 65,535 caracteres.</span>
+                            </span>
                         </div>
 
                         <div id="edit_conf_num_discrete" style="display: none;">
                             <label style="font-weight: 600; font-size: 13px;">Máximo de dígitos enteros:</label>
-                            <input type="number" name="edit_num_disc_digits" id="edit_num_disc_digits" class="regular-text" style="width: 100%; margin-top: 4px;" min="1" max="11">
+                            <input type="number" name="edit_num_disc_digits" id="edit_num_disc_digits" class="regular-text" style="width: 100%; margin-top: 4px;" min="1" max="20">
+                            <span style="font-size: 11px; color: #64748b; display: block; margin-top: 4px;">Rango estricto admitido: <strong>1 a 20 dígitos</strong>.</span>
                         </div>
 
                         <div id="edit_conf_num_continuous" style="display: none;">
                             <div style="display: flex; gap: 15px;">
-                                <div style="flex: 1;"><label style="font-size: 13px;">Enteros:</label><input type="number" name="edit_num_cont_integers" id="edit_num_cont_integers" style="width: 100%;"></div>
-                                <div style="flex: 1;"><label style="font-size: 13px;">Decimales:</label><input type="number" name="edit_num_cont_decimals" id="edit_num_cont_decimals" style="width: 100%;"></div>
+                                <div style="flex: 1;">
+                                    <label style="font-size: 13px; font-weight: 600;">Enteros:</label>
+                                    <input type="number" name="edit_num_cont_integers" id="edit_num_cont_integers" style="width: 100%; margin-top: 4px;" min="1" max="20">
+                                    <span style="font-size: 11px; color: #64748b; display: block; margin-top: 4px;">Rango admitido: 1 a 20.</span>
+                                </div>
+                                <div style="flex: 1;">
+                                    <label style="font-size: 13px; font-weight: 600;">Decimales:</label>
+                                    <input type="number" name="edit_num_cont_decimals" id="edit_num_cont_decimals" style="width: 100%; margin-top: 4px;" min="0" max="20">
+                                    <span style="font-size: 11px; color: #64748b; display: block; margin-top: 4px;">Rango admitido: 0 a 20.</span>
+                                </div>
                             </div>
+                            <span style="font-size: 11px; color: #64748b; display: block; margin-top: 8px;"><strong>Alta Precisión:</strong> Soporta hasta 20 enteros y 20 decimales.</span>
                         </div>
 
-                        <div id="edit_conf_date" style="display: none;"><span style="font-size: 13px;">Calendario Estándar activo.</span></div>
+                        <div id="edit_conf_date" style="display: none;">
+                            <span style="font-size: 13px; color: #334155; display: block; line-height: 1.4;">
+                                <strong>Calendario Estándar:</strong> El sistema utiliza el <strong>Calendario Gregoriano</strong>. Los datos se almacenarán internamente en formato estructurado estandarizado (YYYY-MM-DD).
+                            </span>
+                        </div>
 
                         <div id="edit_conf_time" style="display: none;">
                             <label style="font-weight: 600; font-size: 13px;">Zona Horaria de Visualización:</label>
                             <select name="edit_time_zone_default" id="edit_time_zone_default" style="width: 100%; margin-top: 4px;">
                                 <?php echo wp_timezone_choice( wp_timezone_string() ); ?>
                             </select>
+                            <span style="font-size: 11px; color: #64748b; display: block; margin-top: 4px;">
+                                El sistema almacenará la hora internamente en <strong>UTC (GMT 0)</strong> para garantizar la integridad analítica. La zona seleccionada aquí solo se utilizará para renderizar visualmente los datos.
+                            </span>
                         </div>
 
                         <div id="edit_conf_categorical" style="display: none;">
                             <label style="font-weight: 600; font-size: 13px;">Opciones Disponibles:</label>
                             <textarea name="edit_categorical_options" id="edit_categorical_options" rows="5" style="width: 100%; margin-top: 4px;"></textarea>
+                            <span style="font-size: 11px; color: #64748b; display: block; margin-top: 4px;">Ingrese <strong>una opción por línea</strong>. Evite dejar líneas en blanco.</span>
                             
                             <div style="margin-top: 15px;">
                                 <label style="font-weight: 600; font-size: 13px;">Opción por defecto:</label>
@@ -445,15 +488,16 @@ $human_types = [
                             <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #cbd5e1;">
                                 <label style="font-weight: 600; font-size: 13px;">Codificación Estadística (IDs):</label>
                                 <select name="edit_categorical_id_type" id="edit_categorical_id_type" style="width: 100%; margin-top: 4px;">
-                                    <option value="none">No codificar</option>
-                                    <option value="auto">Codificación Automática</option>
-                                    <option value="manual">Codificación Manual</option>
+                                    <option value="none">No codificar (Guardar en texto plano)</option>
+                                    <option value="auto">Codificación Automática (Secuencial 1, 2, 3...)</option>
+                                    <option value="manual">Codificación Manual (Asignación libre)</option>
                                 </select>
                             </div>
 
                             <div id="edit_box_manual_codes" style="display: none; margin-top: 10px;">
-                                <label style="font-weight: 600; font-size: 13px; color: var(--crea-danger);">Códigos Manuales:</label>
+                                <label style="font-weight: 600; font-size: 13px; color: var(--crea-danger);">Códigos Manuales Asignados:</label>
                                 <textarea name="edit_categorical_manual_codes" id="edit_categorical_manual_codes" rows="3" style="width: 100%; margin-top: 4px;"></textarea>
+                                <span style="font-size: 11px; color: #64748b; display: block; margin-top: 4px;">Ingrese un código en cada línea, respetando el orden exacto de las opciones. Admite valores alfanuméricos (Ej. <code>1</code>, <code>99</code>, <code>CVE_01</code>).</span>
                             </div>
                         </div>
 
@@ -588,7 +632,28 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!val) return;
             wrapConfig.style.display = 'block';
 
-            if (val === 'text_short' || val === 'text_long') { document.getElementById('conf_text').style.display = 'block'; } 
+            var textMaxInput = document.getElementById('text_max_length');
+
+            if (val === 'text_short') { 
+                document.getElementById('conf_text').style.display = 'block'; 
+                document.getElementById('desc_text_short').style.display = 'block';
+                document.getElementById('desc_text_long').style.display = 'none';
+                textMaxInput.setAttribute('min', '1');
+                textMaxInput.setAttribute('max', '255');
+                if(!textMaxInput.value || parseInt(textMaxInput.value) > 255 || parseInt(textMaxInput.value) < 1) {
+                    textMaxInput.value = '255';
+                }
+            } 
+            else if (val === 'text_long') { 
+                document.getElementById('conf_text').style.display = 'block'; 
+                document.getElementById('desc_text_short').style.display = 'none';
+                document.getElementById('desc_text_long').style.display = 'block';
+                textMaxInput.setAttribute('min', '500');
+                textMaxInput.setAttribute('max', '5000');
+                if(!textMaxInput.value || parseInt(textMaxInput.value) > 5000 || parseInt(textMaxInput.value) < 500) {
+                    textMaxInput.value = '1000';
+                }
+            } 
             else if (val === 'text_html') { document.getElementById('conf_html').style.display = 'block'; } 
             else if (val === 'num_discrete') { document.getElementById('conf_num_discrete').style.display = 'block'; } 
             else if (val === 'num_continuous') { document.getElementById('conf_num_continuous').style.display = 'block'; } 
@@ -632,7 +697,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Modal Edit
     function applyEditTypeChange(val) {
         document.getElementById('edit_config_wrapper').style.display = 'none';
         ['edit_conf_text', 'edit_conf_html', 'edit_conf_num_discrete', 'edit_conf_num_continuous', 'edit_conf_date', 'edit_conf_time', 'edit_conf_categorical', 'edit_conf_relation'].forEach(id => document.getElementById(id).style.display = 'none');
@@ -640,12 +704,33 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!val) return;
         document.getElementById('edit_config_wrapper').style.display = 'block';
 
-        if (val === 'text_short' || val === 'text_long') document.getElementById('edit_conf_text').style.display = 'block';
-        else if (val === 'text_html') document.getElementById('edit_conf_html').style.display = 'block';
-        else if (val === 'num_discrete') document.getElementById('edit_conf_num_discrete').style.display = 'block';
-        else if (val === 'num_continuous') document.getElementById('edit_conf_num_continuous').style.display = 'block';
-        else if (val === 'date') document.getElementById('edit_conf_date').style.display = 'block';
-        else if (val === 'time') document.getElementById('edit_conf_time').style.display = 'block';
+        var editTextMaxInput = document.getElementById('edit_text_max_length');
+
+        if (val === 'text_short') { 
+            document.getElementById('edit_conf_text').style.display = 'block'; 
+            document.getElementById('edit_desc_text_short').style.display = 'block';
+            document.getElementById('edit_desc_text_long').style.display = 'none';
+            editTextMaxInput.setAttribute('min', '1');
+            editTextMaxInput.setAttribute('max', '255');
+            if(!editTextMaxInput.value) {
+                editTextMaxInput.value = '255';
+            }
+        } 
+        else if (val === 'text_long') { 
+            document.getElementById('edit_conf_text').style.display = 'block'; 
+            document.getElementById('edit_desc_text_short').style.display = 'none';
+            document.getElementById('edit_desc_text_long').style.display = 'block';
+            editTextMaxInput.setAttribute('min', '500');
+            editTextMaxInput.setAttribute('max', '5000');
+            if(!editTextMaxInput.value) {
+                editTextMaxInput.value = '1000';
+            }
+        } 
+        else if (val === 'text_html') { document.getElementById('edit_conf_html').style.display = 'block'; } 
+        else if (val === 'num_discrete') { document.getElementById('edit_conf_num_discrete').style.display = 'block'; } 
+        else if (val === 'num_continuous') { document.getElementById('edit_conf_num_continuous').style.display = 'block'; } 
+        else if (val === 'date') { document.getElementById('edit_conf_date').style.display = 'block'; } 
+        else if (val === 'time') { document.getElementById('edit_conf_time').style.display = 'block'; } 
         else if (val === 'select' || val === 'radio' || val === 'checkbox') {
             document.getElementById('edit_conf_categorical').style.display = 'block';
             var defSelect = document.getElementById('edit_categorical_default');
@@ -705,6 +790,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             applyEditTypeChange(data.field_type);
 
+            // Cargar los valores del JSON después de preparar la vista
             if (parsedConfig) {
                 if (parsedConfig.max_length) document.getElementById('edit_text_max_length').value = parsedConfig.max_length;
                 if (parsedConfig.digits) document.getElementById('edit_num_disc_digits').value = parsedConfig.digits;
@@ -794,7 +880,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // ☀️ MOTOR JS DRAG & DROP (Libre para todas las variables)
     if (jQuery('#crea-sortable-vars').length) {
         jQuery('#crea-sortable-vars').sortable({
             placeholder: "ui-state-highlight",

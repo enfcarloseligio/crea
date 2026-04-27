@@ -90,7 +90,6 @@ class CREA_Admin {
 			'name'     => $current_wp_user->display_name
 		);
 
-		// DICCIONARIO DE TRADUCCIÓN PARA AUDITORÍA DINÁMICA
 		$config_labels = [
 			'max_length' => 'Caracteres Máximos', 'digits' => 'Dígitos Enteros',
 			'integers' => 'Dígitos Enteros', 'decimals' => 'Decimales',
@@ -320,7 +319,6 @@ class CREA_Admin {
 
 			$config = [];
 			
-			// ☀️ AUDITORÍA EXPLÍCITA Y DINÁMICA
 			$diff = [
 				'Nombre Variable' => ['old' => 'N/A', 'new' => $field_name],
 				'Slug SQL (Columna)' => ['old' => 'N/A', 'new' => $field_slug],
@@ -351,7 +349,6 @@ class CREA_Admin {
 				$config['rel_cond_value'] = sanitize_text_field($_POST['rel_cond_value']);
 			}
 
-			// Inyectar config formateado en el diff dinámicamente
 			foreach($config as $k => $v) {
 				$lbl = isset($config_labels[$k]) ? $config_labels[$k] : ucwords(str_replace('_', ' ', $k));
 				if (is_array($v)) $v = empty($v) ? 'Ninguna' : implode(", ", $v);
@@ -378,15 +375,14 @@ class CREA_Admin {
 
 			if ($has_twin) {
 				$twin_type = ($config['id_type'] === 'auto') ? 'num_discrete' : 'text_short';
-				$twin_conf = ($config['id_type'] === 'auto') ? wp_json_encode(['digits'=>11]) : wp_json_encode(['max_length'=>255]);
+				// Generamos BIGINT para los auto IDs para asegurar máxima compatibilidad estadística
+				$twin_conf = ($config['id_type'] === 'auto') ? wp_json_encode(['digits'=>20]) : wp_json_encode(['max_length'=>255]);
 				$wpdb->insert($table_fields, [
 					'form_id' => $base_id, 'field_name' => 'ID ' . $field_name, 'field_slug' => 'id_' . $field_slug,
 					'field_type' => $twin_type, 'is_required' => 0, 'config' => $twin_conf, 'is_system' => 1,
 					'parent_slug' => $field_slug, 'field_order' => $next_order + 1, 'created_by' => $current_user_id,
 					'updated_by' => $current_user_id, 'created_at' => $current_time, 'updated_at' => $current_time
 				]);
-				
-				// ☀️ Auditoría explícita de la hija
 				$diff['Columna de Sistema (ID)'] = ['old' => 'N/A', 'new' => 'Generada automáticamente (id_'.$field_slug.')'];
 			}
 
@@ -401,19 +397,30 @@ class CREA_Admin {
 			) {$wpdb->get_charset_collate()};";
 			dbDelta( $sql_physical );
 
+			// LÓGICA DINÁMICA DE SQL (DECIMAL DE ALTA PRECISIÓN / BIG DATA)
 			$sql_type = "TEXT";
 			if (in_array($field_type, ['text_short', 'select', 'radio', 'relation'])) {
 				$sql_type = "VARCHAR(" . (isset($config['max_length']) ? $config['max_length'] : 255) . ")";
-			} elseif ($field_type === 'num_discrete') { $sql_type = "INT"; } 
-			  elseif ($field_type === 'num_continuous') { $sql_type = "DECIMAL(15,4)"; } 
-			  elseif ($field_type === 'date') { $sql_type = "DATE"; } 
-			  elseif ($field_type === 'time') { $sql_type = "TIME"; }
+			} 
+			elseif ($field_type === 'num_discrete') { 
+				$dig = (isset($config['digits']) && $config['digits'] > 0) ? intval($config['digits']) : 20;
+				$sql_type = "DECIMAL($dig, 0)"; 
+			} 
+			elseif ($field_type === 'num_continuous') { 
+				$intg = (isset($config['integers']) && $config['integers'] > 0) ? intval($config['integers']) : 20;
+				$deci = isset($config['decimals']) ? intval($config['decimals']) : 8;
+				$tot = $intg + $deci;
+				$sql_type = "DECIMAL($tot, $deci)"; 
+			} 
+			elseif ($field_type === 'date') { $sql_type = "DATE"; } 
+			elseif ($field_type === 'time') { $sql_type = "TIME"; }
 
 			$col_check = $wpdb->get_results("SHOW COLUMNS FROM $physical_table LIKE '$field_slug'");
 			if (empty($col_check)) {
 				$wpdb->query("ALTER TABLE $physical_table ADD COLUMN $field_slug $sql_type");
 				if ($has_twin) {
-					$twin_sql_type = ($config['id_type'] === 'auto') ? 'INT' : 'VARCHAR(255)';
+					// ☀️ ID Generado automáticamente en BIG DATA SQL (20 dígitos en lugar de INT)
+					$twin_sql_type = ($config['id_type'] === 'auto') ? 'DECIMAL(20,0)' : 'VARCHAR(255)';
 					$wpdb->query("ALTER TABLE $physical_table ADD COLUMN id_$field_slug $twin_sql_type");
 				}
 			}
@@ -487,7 +494,6 @@ class CREA_Admin {
 			}
 			if ($old_field['is_required'] != $new_req) $diff['Dato Obligatorio'] = ['old' => $old_field['is_required'] ? 'Sí' : 'No', 'new' => $new_req ? 'Sí' : 'No'];
 			
-			// ☀️ COMPARACIÓN DINÁMICA DE CONFIGURACIONES JSON (Desglose exacto)
 			$old_conf_arr = json_decode($old_field['config'], true) ?: [];
 			$all_keys = array_unique(array_merge(array_keys($old_conf_arr), array_keys($config)));
 			
@@ -512,14 +518,25 @@ class CREA_Admin {
 					$old_id_type = isset($old_conf_arr['id_type']) ? $old_conf_arr['id_type'] : 'none';
 					$new_id_type = isset($config['id_type']) ? $config['id_type'] : 'none';
 
+					// ☀️ LÓGICA DINÁMICA DE SQL (EDICIÓN)
 					$sql_type = "TEXT";
-					if (in_array($new_type, ['text_short', 'select', 'radio', 'relation'])) { $sql_type = "VARCHAR(" . (isset($config['max_length']) ? $config['max_length'] : 255) . ")"; } 
-					elseif ($new_type === 'num_discrete') { $sql_type = "INT"; } 
-					elseif ($new_type === 'num_continuous') { $sql_type = "DECIMAL(15,4)"; } 
+					if (in_array($new_type, ['text_short', 'select', 'radio', 'relation'])) { 
+						$sql_type = "VARCHAR(" . (isset($config['max_length']) ? $config['max_length'] : 255) . ")"; 
+					} 
+					elseif ($new_type === 'num_discrete') { 
+						$dig = (isset($config['digits']) && $config['digits'] > 0) ? intval($config['digits']) : 20;
+						$sql_type = "DECIMAL($dig, 0)"; 
+					} 
+					elseif ($new_type === 'num_continuous') { 
+						$intg = (isset($config['integers']) && $config['integers'] > 0) ? intval($config['integers']) : 20;
+						$deci = isset($config['decimals']) ? intval($config['decimals']) : 8;
+						$tot = $intg + $deci;
+						$sql_type = "DECIMAL($tot, $deci)"; 
+					} 
 					elseif ($new_type === 'date') { $sql_type = "DATE"; } 
 					elseif ($new_type === 'time') { $sql_type = "TIME"; }
 
-					if ($old_field['field_slug'] !== $new_slug || $old_field['field_type'] !== $new_type) {
+					if ($old_field['field_slug'] !== $new_slug || $old_field['field_type'] !== $new_type || $old_field['config'] !== $new_config_json) {
 						$wpdb->query("ALTER TABLE $physical_table CHANGE COLUMN {$old_field['field_slug']} $new_slug $sql_type");
 					}
 
@@ -530,13 +547,13 @@ class CREA_Admin {
 					if ($new_id_type === 'none' && in_array($old_id_type, ['auto', 'manual'])) {
 						$wpdb->query("ALTER TABLE $physical_table DROP COLUMN $twin_slug_old");
 						$wpdb->delete($table_fields, ['parent_slug' => $old_field['field_slug'], 'form_id' => $base_id]);
-						// ☀️ Auditoría
 						$diff['Columna de Sistema (ID)'] = ['old' => 'Activa ('.$twin_slug_old.')', 'new' => 'Eliminada permanentemente por cambio de codificación'];
 					} 
 					elseif ($old_id_type === 'none' && in_array($new_id_type, ['auto', 'manual'])) {
-						$twin_sql_type = ($new_id_type === 'auto') ? 'INT' : 'VARCHAR(255)';
+						// ID Generado automáticamente en BIG DATA SQL (20 dígitos)
+						$twin_sql_type = ($new_id_type === 'auto') ? 'DECIMAL(20,0)' : 'VARCHAR(255)';
 						$twin_type_str = ($new_id_type === 'auto') ? 'num_discrete' : 'text_short';
-						$twin_conf_str = ($new_id_type === 'auto') ? wp_json_encode(['digits'=>11]) : wp_json_encode(['max_length'=>255]);
+						$twin_conf_str = ($new_id_type === 'auto') ? wp_json_encode(['digits'=>20]) : wp_json_encode(['max_length'=>255]);
 						
 						$wpdb->query("ALTER TABLE $physical_table ADD COLUMN $twin_slug_new $twin_sql_type");
 						$wpdb->insert($table_fields, [
@@ -545,13 +562,12 @@ class CREA_Admin {
 							'field_order' => $old_field['field_order'] + 1, 'created_by' => $current_user_id, 'updated_by' => $current_user_id,
 							'created_at' => $current_time, 'updated_at' => $current_time
 						]);
-						// ☀️ Auditoría
 						$diff['Columna de Sistema (ID)'] = ['old' => 'N/A', 'new' => 'Generada automáticamente ('.$twin_slug_new.')'];
 					}
 					elseif (in_array($old_id_type, ['auto', 'manual']) && in_array($new_id_type, ['auto', 'manual'])) {
-						$twin_sql_type = ($new_id_type === 'auto') ? 'INT' : 'VARCHAR(255)';
+						$twin_sql_type = ($new_id_type === 'auto') ? 'DECIMAL(20,0)' : 'VARCHAR(255)';
 						$twin_type_str = ($new_id_type === 'auto') ? 'num_discrete' : 'text_short';
-						$twin_conf_str = ($new_id_type === 'auto') ? wp_json_encode(['digits'=>11]) : wp_json_encode(['max_length'=>255]);
+						$twin_conf_str = ($new_id_type === 'auto') ? wp_json_encode(['digits'=>20]) : wp_json_encode(['max_length'=>255]);
 						
 						$wpdb->query("ALTER TABLE $physical_table CHANGE COLUMN $twin_slug_old $twin_slug_new $twin_sql_type");
 						$wpdb->update($table_fields, [
@@ -597,7 +613,6 @@ class CREA_Admin {
 				$col_id_check = $wpdb->get_results("SHOW COLUMNS FROM $physical_table LIKE 'id_$field_slug'");
 				if (!empty($col_id_check)) {
 					$wpdb->query("ALTER TABLE $physical_table DROP COLUMN id_$field_slug");
-					// ☀️ Auditoría
 					$diff['Columna de Sistema (ID)'] = ['old' => 'Activa (id_'.$field_slug.')', 'new' => 'Eliminada permanentemente en conjunto con la principal'];
 				}
 			}
