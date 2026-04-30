@@ -1,7 +1,7 @@
 <?php
 /**
  * Archivo: wp-content/plugins/crea/includes/shortcodes/views/view-table.php
- * Descripción: Interfaz gráfica moderna y dinámica para la matriz de datos (Perfil Analista).
+ * Descripción: Interfaz gráfica moderna y dinámica para la matriz de datos.
  */
 if ( ! defined( 'WPINC' ) ) { die; }
 
@@ -20,6 +20,9 @@ $default_front_colors = [
     'even_text'   => '#334155',
 ];
 $front_colors = wp_parse_args( get_option( 'crea_front_colors', [] ), $default_front_colors );
+
+// ☀️ Bandera para saber si estamos en modo Editor
+$is_editor_mode = isset($is_editor_mode) ? $is_editor_mode : false;
 ?>
 
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -53,7 +56,6 @@ $front_colors = wp_parse_args( get_option( 'crea_front_colors', [] ), $default_f
         background: transparent;
     }
     
-    /* ☀️ Titulares limpios: Heredan estilos del tema activo */
     .crea-table-header h2 { margin: 0 0 5px 0; }
     .crea-table-header p { margin: 0; opacity: 0.8; }
 
@@ -95,7 +97,6 @@ $front_colors = wp_parse_args( get_option( 'crea_front_colors', [] ), $default_f
     }
     .crea-table-controls select:focus, .crea-search-box input:focus { border-color: var(--crea-front-primary); }
 
-    /* Select2 Ajustes para igualar alturas y tipografía en todos sus estados */
     .select2-container .select2-selection--single { height: 30px !important; border-color: #cbd5e1 !important; display: flex; align-items: center; }
     .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: normal !important; }
     .select2-container--default .select2-selection--single .select2-selection__arrow { height: 28px !important; }
@@ -119,7 +120,7 @@ $front_colors = wp_parse_args( get_option( 'crea_front_colors', [] ), $default_f
         border-collapse: collapse;
         text-align: left;
         white-space: nowrap;
-        margin: 0; /* Anula márgenes del tema */
+        margin: 0;
     }
     
     .crea-frontend-table th,
@@ -128,7 +129,6 @@ $front_colors = wp_parse_args( get_option( 'crea_front_colors', [] ), $default_f
         border-bottom: 1px solid #e2e8f0;
     }
 
-    /* ☀️ Colores dinámicos para la tabla */
     .crea-frontend-table th {
         background-color: var(--crea-front-th-bg);
         color: var(--crea-front-th-text);
@@ -151,10 +151,17 @@ $front_colors = wp_parse_args( get_option( 'crea_front_colors', [] ), $default_f
 
     .crea-frontend-table th .sort-icon { opacity: 0.5; margin-left: 5px; }
     .crea-frontend-table tbody tr { transition: opacity 0.1s; }
-    .crea-frontend-table tbody tr:hover { opacity: 0.85; } /* Efecto hover neutro */
+    .crea-frontend-table tbody tr:hover { opacity: 0.85; }
 
     .crea-frontend-table td.crea-cell-id { font-weight: 600; }
     .crea-frontend-table td.crea-cell-longtext { max-width: 350px; white-space: normal; word-wrap: break-word; line-height: 1.5; }
+
+    /* ☀️ CSS Dinámico para Editor */
+    <?php if ($is_editor_mode) : ?>
+    .crea-btn-action { background: var(--crea-front-primary); color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: opacity 0.2s; }
+    .crea-btn-action:hover { opacity: 0.8; }
+    .crea-btn-action svg { width: 14px; height: 14px; }
+    <?php endif; ?>
 
     /* PIE DE TABLA Y PAGINACIÓN */
     .crea-table-footer {
@@ -191,7 +198,7 @@ $front_colors = wp_parse_args( get_option( 'crea_front_colors', [] ), $default_f
 <div class="crea-table-wrapper" id="crea-visor-<?php echo $base_id; ?>">
     <div class="crea-table-header">
         <h2><?php echo esc_html( $form['form_name'] ); ?></h2>
-        <p>Matriz de Datos Estructurada</p>
+        <p><?php echo $is_editor_mode ? 'Panel de Corrección y Visualización (Editor)' : 'Matriz de Datos Estructurada'; ?></p>
     </div>
 
     <?php if ( empty($records) ) : ?>
@@ -244,21 +251,36 @@ $front_colors = wp_parse_args( get_option( 'crea_front_colors', [] ), $default_f
             <table class="crea-frontend-table">
                 <thead>
                     <tr>
-                        <th data-sort="number" data-col="0">ID <span class="sort-icon">↕</span></th>
-                        <th data-sort="number" data-col="1">Fecha de Captura <span class="sort-icon">↕</span></th>
+                        <?php if ($is_editor_mode) : ?>
+                            <th style="width: 80px; text-align: center;">Acciones</th>
+                        <?php endif; ?>
+                        
+                        <th data-sort="number">ID <span class="sort-icon">↕</span></th>
+                        <th data-sort="number">Fecha de Captura <span class="sort-icon">↕</span></th>
                         <?php 
-                        $col_idx = 2;
                         foreach ( $fields as $field ) {
                             $sort_type = in_array($field['field_type'], ['num_discrete', 'num_continuous']) ? 'number' : 'string';
-                            echo '<th data-sort="'.$sort_type.'" data-col="'.$col_idx.'">' . esc_html( $field['field_name'] ) . ' <span class="sort-icon">↕</span></th>';
-                            $col_idx++;
+                            echo '<th data-sort="'.$sort_type.'">' . esc_html( $field['field_name'] ) . ' <span class="sort-icon">↕</span></th>';
                         }
                         ?>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ( $records as $row ) : ?>
-                    <tr class="crea-data-row">
+                    <?php foreach ( $records as $row ) : 
+                        // Inyecta el JSON solo si estamos en modo editor
+                        $json_attr = $is_editor_mode ? ' data-json="'.esc_attr(wp_json_encode($row)).'"' : '';
+                    ?>
+                    <tr class="crea-data-row"<?php echo $json_attr; ?>>
+                        
+                        <?php if ($is_editor_mode) : ?>
+                        <td style="text-align: center;">
+                            <button type="button" class="crea-btn-action crea-btn-edit" data-id="<?php echo esc_attr($row['id']); ?>" title="Editar Registro">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                Editar
+                            </button>
+                        </td>
+                        <?php endif; ?>
+
                         <td class="crea-cell-id" data-val="<?php echo esc_attr($row['id']); ?>">
                             <?php echo esc_html( $row['id'] ); ?>
                         </td>
@@ -319,7 +341,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let sortAsc = true;
     let systemTz = '<?php echo esc_js($system_tz); ?>';
 
-    // 1. LÓGICA DE ZONA HORARIA Y LOCAL STORAGE
     const savedTz = localStorage.getItem('crea_tz_preference');
     if (savedTz) {
         tzSelect.value = savedTz;
@@ -366,7 +387,6 @@ document.addEventListener('DOMContentLoaded', function() {
     saveTzCheckbox.addEventListener('change', updateDates);
     updateDates(); 
 
-    // 2. MOTOR DE BÚSQUEDA
     function applyFilter() {
         const query = searchInput.value.toLowerCase().trim();
         if (query === '') {
@@ -380,10 +400,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     searchInput.addEventListener('input', applyFilter);
 
-    // 3. MOTOR DE ORDENAMIENTO
     function applySort() {
         if (sortCol >= 0) {
-            const type = headers[sortCol].getAttribute('data-sort');
+            const targetTh = wrapper.querySelector(`th:nth-child(${sortCol + 1})`);
+            const type = targetTh ? targetTh.getAttribute('data-sort') : 'string';
+            
             filteredRows.sort((a, b) => {
                 const cellA = a.children[sortCol].getAttribute('data-val') || a.children[sortCol].textContent;
                 const cellB = b.children[sortCol].getAttribute('data-val') || b.children[sortCol].textContent;
@@ -398,12 +419,14 @@ document.addEventListener('DOMContentLoaded', function() {
         renderTable();
     }
 
-    headers.forEach((th, index) => {
+    // ☀️ Lógica infalible de celda: th.cellIndex asegura correspondencia en tablas dinámicas
+    headers.forEach((th) => {
         th.addEventListener('click', () => {
-            if (sortCol === index) {
+            const domIndex = th.cellIndex; 
+            if (sortCol === domIndex) {
                 sortAsc = !sortAsc;
             } else {
-                sortCol = index;
+                sortCol = domIndex;
                 sortAsc = true;
             }
             headers.forEach(h => h.querySelector('.sort-icon').textContent = '↕');
@@ -412,7 +435,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // 4. PAGINACIÓN
     function renderTable() {
         tbody.innerHTML = '';
         const total = filteredRows.length;

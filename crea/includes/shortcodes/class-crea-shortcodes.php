@@ -29,9 +29,8 @@ class CREA_Shortcodes {
         if ( !empty($base_ids) ) {
             foreach ( $base_ids as $id ) {
                 add_shortcode( "crea_table_a_{$id}", array( $this, 'render_placeholder' ) );
-                add_shortcode( "crea_table_er_{$id}", array( $this, 'render_placeholder' ) );
+                add_shortcode( "crea_table_er_{$id}", array( $this, 'render_table_editor' ) ); // Enlazado al perfil Editor
                 add_shortcode( "crea_table_ar_{$id}", array( $this, 'render_form_add' ) ); 
-                // ☀️ Enlazamos el perfil de Analista (vr) a su nueva función de visor
                 add_shortcode( "crea_table_vr_{$id}", array( $this, 'render_table_view' ) );
             }
         }
@@ -41,8 +40,11 @@ class CREA_Shortcodes {
      * Procesa los datos del formulario, calcula identificadores estadísticos y guarda el registro.
      */
     public function process_form_submission() {
-        if ( isset($_POST['crea_action']) && $_POST['crea_action'] === 'save_new_record' ) {
+        // Intercepta tanto Creación como Edición
+        if ( isset($_POST['crea_action']) && in_array($_POST['crea_action'], ['save_new_record', 'edit_existing_record']) ) {
             $base_id = intval($_POST['base_id']);
+            $is_edit = ($_POST['crea_action'] === 'edit_existing_record');
+            $record_id = $is_edit ? intval($_POST['record_id']) : 0;
             
             // Validación del token de seguridad (Nonce)
             if ( ! isset($_POST['crea_record_nonce']) || ! wp_verify_nonce($_POST['crea_record_nonce'], 'crea_submit_record_' . $base_id) ) {
@@ -110,21 +112,27 @@ class CREA_Shortcodes {
             $current_time = gmdate('Y-m-d H:i:s');
             $current_user_id = get_current_user_id();
             
-            $insert_data['created_at'] = $current_time;
             $insert_data['updated_at'] = $current_time;
-            $insert_data['created_by'] = $current_user_id ?: null;
             $insert_data['updated_by'] = $current_user_id ?: null;
 
-            // Inserción en la estructura física
-            $inserted = $wpdb->insert( $physical_table, $insert_data );
+            // Inserción o Actualización en la estructura física
+            if ( $is_edit ) {
+                $processed = $wpdb->update( $physical_table, $insert_data, array('id' => $record_id) );
+                $msg_param = 'edit_success';
+            } else {
+                $insert_data['created_at'] = $current_time;
+                $insert_data['created_by'] = $current_user_id ?: null;
+                $processed = $wpdb->insert( $physical_table, $insert_data );
+                $msg_param = 'success';
+            }
 
-            if ( $inserted ) {
+            if ( $processed !== false ) {
                 $redirect_url = remove_query_arg( array('crea_msg') );
-                $redirect_url = add_query_arg( 'crea_msg', 'success', $redirect_url );
+                $redirect_url = add_query_arg( 'crea_msg', $msg_param, $redirect_url );
                 wp_safe_redirect( $redirect_url );
                 exit;
             } else {
-                wp_die('Fallo en la inserción de datos: ' . $wpdb->last_error);
+                wp_die('Fallo en la inserción/actualización de datos: ' . $wpdb->last_error);
             }
         }
     }
@@ -170,7 +178,7 @@ class CREA_Shortcodes {
     }
 
     /**
-     * ☀️ NUEVO: Renderiza la tabla de visualización de datos (Perfil Analista).
+     * Renderiza la tabla de visualización de datos (Perfil Analista).
      */
     public function render_table_view( $atts, $content = null, $tag = '' ) {
         // Extrae el ID del shortcode (Ej. crea_table_vr_16 -> 16)
@@ -207,6 +215,39 @@ class CREA_Shortcodes {
 
         ob_start();
         include plugin_dir_path( __FILE__ ) . 'views/view-table.php';
+        return ob_get_clean();
+    }
+
+    /**
+     * Renderiza la tabla con permisos de edición (Perfil Editor).
+     */
+    public function render_table_editor( $atts, $content = null, $tag = '' ) {
+        $base_id = intval( str_replace( 'crea_table_er_', '', $tag ) );
+
+        if ( $base_id <= 0 ) return '<p style="color:var(--crea-danger);">Error: Identificador de base de datos no reconocido.</p>';
+
+        global $wpdb;
+        $table_forms = $wpdb->prefix . 'crea_forms';
+        $table_fields = $wpdb->prefix . 'crea_fields';
+
+        $form = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table_forms WHERE id = %d", $base_id ), ARRAY_A );
+        if ( ! $form ) return '<p style="color:var(--crea-danger);">Error: Estructura de base de datos inexistente.</p>';
+
+        $physical_table = $wpdb->prefix . "crea_data_" . $form['form_slug'];
+
+        if ($wpdb->get_var("SHOW TABLES LIKE '$physical_table'") !== $physical_table) {
+            return '<p style="color:var(--crea-danger);">Error: Estructura física de datos no localizada en el servidor.</p>';
+        }
+
+        $fields = $wpdb->get_results( $wpdb->prepare( 
+            "SELECT * FROM $table_fields WHERE form_id = %d AND is_system = 0 ORDER BY field_order ASC, id ASC", 
+            $base_id 
+        ), ARRAY_A );
+
+        $records = $wpdb->get_results( "SELECT * FROM $physical_table ORDER BY created_at DESC", ARRAY_A );
+
+        ob_start();
+        include plugin_dir_path( __FILE__ ) . 'views/view-table-editor.php';
         return ob_get_clean();
     }
 }
