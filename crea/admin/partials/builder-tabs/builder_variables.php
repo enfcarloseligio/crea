@@ -133,24 +133,32 @@ $human_types = [
                         <div id="config_wrapper" style="background: #F1F5F9; padding: 15px; border-radius: 6px; border: 1px solid #cbd5e1; display: none;">
                             <h4 style="margin-top: 0; margin-bottom: 15px; color: #334155; border-bottom: 1px solid #cbd5e1; padding-bottom: 5px;">Configuración Específica</h4>
                             
+                            <div id="conf_filter" style="display: none; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed #cbd5e1;">
+                                <label style="font-weight: 600; font-size: 13px;">Uso Analítico:</label>
+                                <select name="is_filterable" id="is_filterable" style="width: 100%; margin-top: 4px;">
+                                    <option value="0" selected>No permitir filtrar por esta variable</option>
+                                    <option value="1">Sí, añadir como Filtro Avanzado en las tablas</option>
+                                </select>
+                            </div>
+
                             <div id="conf_text" style="display: none;">
                                 <label style="font-weight: 600; font-size: 13px;">Límite de Caracteres Máximos:</label>
                                 <input type="number" name="text_max_length" id="text_max_length" class="regular-text" style="width: 100%; margin-top: 4px;" value="255" min="1">
-                                <span id="desc_text_short" style="font-size: 11px; color: #64748b; display: none; margin-top: 4px;">Rango estricto admitido: <strong>1 a 255</strong> caracteres (Ideal para nombres, folios, identificadores).</span>
-                                <span id="desc_text_long" style="font-size: 11px; color: #64748b; display: none; margin-top: 4px;">Rango estricto admitido: <strong>500 a 5000</strong> caracteres (Ideal para notas clínicas o descripciones extensas).</span>
+                                <span id="desc_text_short" style="font-size: 11px; color: #64748b; display: none; margin-top: 4px;">Rango estricto admitido: <strong>1 a 255</strong> caracteres.</span>
+                                <span id="desc_text_long" style="font-size: 11px; color: #64748b; display: none; margin-top: 4px;">Rango estricto admitido: <strong>500 a 5000</strong> caracteres.</span>
                             </div>
 
                             <div id="conf_html" style="display: none;">
                                 <span style="font-size: 13px; color: #334155; display: block; line-height: 1.4;">
-                                    <strong>Capacidad Extendida:</strong> El formato HTML requiere espacio adicional para guardar etiquetas de estilo.<br>
-                                    <span style="color: #64748b; font-size: 12px; margin-top: 5px; display: inline-block;">Límite técnico máximo soportado: 65,535 caracteres (Aprox. 15 a 20 cuartillas).</span>
+                                    <strong>Capacidad Extendida:</strong> El formato HTML requiere espacio adicional.<br>
+                                    <span style="color: #64748b; font-size: 12px; margin-top: 5px; display: inline-block;">Límite técnico máximo soportado: 65,535 caracteres.</span>
                                 </span>
                             </div>
 
                             <div id="conf_num_discrete" style="display: none;">
                                 <label style="font-weight: 600; font-size: 13px;">Máximo de dígitos enteros permitidos:</label>
                                 <input type="number" name="num_disc_digits" id="num_disc_digits" class="regular-text" style="width: 100%; margin-top: 4px;" value="2" min="1" max="20">
-                                <span style="font-size: 11px; color: #64748b; display: block; margin-top: 4px;">Rango estricto admitido: <strong>1 a 20 dígitos</strong>. Soporta arquitectura Big Data (millones de millones) para conteos genómicos o poblacionales.</span>
+                                <span style="font-size: 11px; color: #64748b; display: block; margin-top: 4px;">Rango estricto admitido: <strong>1 a 20 dígitos</strong>. Soporta arquitectura Big Data.</span>
                             </div>
 
                             <div id="conf_num_continuous" style="display: none;">
@@ -158,29 +166,35 @@ $human_types = [
                                     <div style="flex: 1;">
                                         <label style="font-size: 13px; font-weight: 600;">Enteros:</label>
                                         <input type="number" name="num_cont_integers" id="num_cont_integers" style="width: 100%; margin-top: 4px;" value="2" min="1" max="20">
-                                        <span style="font-size: 11px; color: #64748b; display: block; margin-top: 4px;">Rango admitido: 1 a 20.</span>
                                     </div>
                                     <div style="flex: 1;">
                                         <label style="font-size: 13px; font-weight: 600;">Decimales:</label>
                                         <input type="number" name="num_cont_decimals" id="num_cont_decimals" style="width: 100%; margin-top: 4px;" value="8" min="0" max="20">
-                                        <span style="font-size: 11px; color: #64748b; display: block; margin-top: 4px;">Rango admitido: 0 a 20.</span>
                                     </div>
                                 </div>
-                                <span style="font-size: 11px; color: #64748b; display: block; margin-top: 8px;"><strong>Alta Precisión:</strong> Soporta hasta 20 enteros y 20 decimales. Ideal para registros de ADN, farmacología o química analítica.</span>
+                                <span style="font-size: 11px; color: #64748b; display: block; margin-top: 8px;"><strong>Alta Precisión:</strong> Soporta hasta 20 enteros y 20 decimales. Ideal para registros de ADN o química.</span>
                             </div>
 
                             <div id="conf_date" style="display: none;">
                                 <span style="font-size: 13px; color: #334155; display: block; line-height: 1.4;">
-                                    <strong>Calendario Estándar:</strong> El sistema utiliza el <strong>Calendario Gregoriano</strong>. Los datos se almacenarán internamente en formato estructurado estandarizado (YYYY-MM-DD) para facilitar el análisis temporal.
+                                    <strong>Calendario Estándar:</strong> El sistema utiliza el Calendario Gregoriano. Formato interno de guardado (YYYY-MM-DD).
                                 </span>
                             </div>
 
                             <div id="conf_time" style="display: none;">
+                                <div style="margin-bottom: 15px;">
+                                    <label style="font-weight: 600; font-size: 13px;">Formato de Visualización:</label>
+                                    <select name="time_format" id="time_format" style="width: 100%; margin-top: 4px;">
+                                        <option value="12h">12 Horas (AM / PM)</option>
+                                        <option value="24h">24 Horas (Militar)</option>
+                                    </select>
+                                </div>
+
                                 <label style="font-weight: 600; font-size: 13px;">Zona Horaria de Visualización:</label>
                                 <select name="time_zone_default" style="width: 100%; margin-top: 4px;" class="crea-searchable-select">
                                     <?php echo wp_timezone_choice( wp_timezone_string() ); ?>
                                 </select>
-                                <span style="font-size: 11px; color: #64748b; display: block; margin-top: 4px;">
+                                <span style="font-size: 11px; color: #64748b; display: block; margin-top: 4px; line-height: 1.4;">
                                     El sistema almacenará la hora internamente en <strong>UTC (GMT 0)</strong> para garantizar la integridad analítica de los datos. La zona horaria seleccionada aquí solo se utilizará para renderizar visualmente los datos.
                                 </span>
                             </div>
@@ -207,10 +221,7 @@ $human_types = [
                                 <div id="box_manual_codes" style="display: none; margin-top: 10px;">
                                     <label style="font-weight: 600; font-size: 13px; color: var(--crea-danger);">Códigos Manuales Asignados:</label>
                                     <textarea name="categorical_manual_codes" id="categorical_manual_codes" rows="3" style="width: 100%; margin-top: 4px;"></textarea>
-                                    <span style="font-size: 11px; color: #64748b; display: block; margin-top: 4px;">Ingrese un código en cada línea, respetando el orden exacto de las opciones definidas arriba. Admite valores alfanuméricos (Ej. <code>1</code>, <code>99</code>, <code>CVE_01</code>).</span>
-                                    <div id="warning_manual_codes" style="display: none; margin-top: 10px; padding: 10px; background: #FEF2F2; border-left: 3px solid var(--crea-danger); color: var(--crea-danger); font-size: 12px;">
-                                        <strong>Alerta del Sistema:</strong> Existe un desfase. La cantidad de códigos declarados no coincide con el total de opciones.
-                                    </div>
+                                    <span style="font-size: 11px; color: #64748b; display: block; margin-top: 4px;">Ingrese un código en cada línea, respetando el orden exacto. Admite valores alfanuméricos.</span>
                                 </div>
                             </div>
 
@@ -225,11 +236,20 @@ $human_types = [
                                 
                                 <div style="margin-top: 15px;">
                                     <label style="font-weight: 600; font-size: 13px;">2. Variable a extraer:</label>
-                                    <input type="text" name="rel_field_slug" id="rel_field_slug" style="width: 100%;" placeholder="Slug de la variable maestra">
+                                    <input type="text" name="rel_field_slug" id="rel_field_slug" style="width: 100%; margin-top: 4px;" placeholder="Slug de la variable maestra">
                                 </div>
 
                                 <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #cbd5e1;">
-                                    <label style="font-weight: 600; font-size: 13px;">3. Condicional de Filtrado (Opcional):</label>
+                                    <label style="font-weight: 600; font-size: 13px;">3. Formato de Salida (Visualización):</label>
+                                    <select name="rel_output_format" id="rel_output_format" style="width: 100%; margin-top: 4px;">
+                                        <option value="select">Menú Desplegable</option>
+                                        <option value="radio">Botones de Radio</option>
+                                        <option value="checkbox">Casillas de Verificación (Múltiple)</option>
+                                    </select>
+                                </div>
+
+                                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #cbd5e1;">
+                                    <label style="font-weight: 600; font-size: 13px;">4. Condicional de Filtrado (Opcional):</label>
                                     <div style="display: flex; gap: 5px; align-items: center; margin-top: 4px;">
                                         <input type="text" name="rel_cond_field" id="rel_cond_field" style="width: 120px; font-size: 12px;" placeholder="Variable"> = 
                                         <input type="text" name="rel_cond_value" id="rel_cond_value" style="width: 80px; font-size: 12px;" placeholder="Valor">
@@ -423,24 +443,28 @@ $human_types = [
                     <div id="edit_config_wrapper" style="background: #F1F5F9; padding: 15px; border-radius: 6px; border: 1px solid #cbd5e1; display: none;">
                         <h4 style="margin-top: 0; margin-bottom: 15px; color: #334155; border-bottom: 1px solid #cbd5e1; padding-bottom: 5px;">Configuración Específica</h4>
                         
+                        <div id="edit_conf_filter" style="display: none; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed #cbd5e1;">
+                            <label style="font-weight: 600; font-size: 13px;">Uso Analítico:</label>
+                            <select name="edit_is_filterable" id="edit_is_filterable" style="width: 100%; margin-top: 4px;">
+                                <option value="0">No permitir filtrar por esta variable</option>
+                                <option value="1">Sí, añadir como Filtro Avanzado en las tablas</option>
+                            </select>
+                        </div>
+
                         <div id="edit_conf_text" style="display: none;">
                             <label style="font-weight: 600; font-size: 13px;">Límite de Caracteres Máximos:</label>
                             <input type="number" name="edit_text_max_length" id="edit_text_max_length" class="regular-text" style="width: 100%; margin-top: 4px;" min="1">
-                            <span id="edit_desc_text_short" style="font-size: 11px; color: #64748b; display: none; margin-top: 4px;">Rango estricto admitido: <strong>1 a 255</strong> caracteres (Ideal para nombres, folios, identificadores).</span>
-                            <span id="edit_desc_text_long" style="font-size: 11px; color: #64748b; display: none; margin-top: 4px;">Rango estricto admitido: <strong>500 a 5000</strong> caracteres (Ideal para notas clínicas o descripciones extensas).</span>
                         </div>
 
                         <div id="edit_conf_html" style="display: none;">
                             <span style="font-size: 13px; color: #334155; display: block; line-height: 1.4;">
-                                <strong>Capacidad Extendida:</strong> El formato HTML requiere espacio adicional para guardar etiquetas de estilo.<br>
-                                <span style="color: #64748b; font-size: 12px; margin-top: 5px; display: inline-block;">Límite técnico máximo soportado: 65,535 caracteres.</span>
+                                Límite técnico máximo soportado: 65,535 caracteres.
                             </span>
                         </div>
 
                         <div id="edit_conf_num_discrete" style="display: none;">
                             <label style="font-weight: 600; font-size: 13px;">Máximo de dígitos enteros:</label>
                             <input type="number" name="edit_num_disc_digits" id="edit_num_disc_digits" class="regular-text" style="width: 100%; margin-top: 4px;" min="1" max="20">
-                            <span style="font-size: 11px; color: #64748b; display: block; margin-top: 4px;">Rango estricto admitido: <strong>1 a 20 dígitos</strong>.</span>
                         </div>
 
                         <div id="edit_conf_num_continuous" style="display: none;">
@@ -448,37 +472,41 @@ $human_types = [
                                 <div style="flex: 1;">
                                     <label style="font-size: 13px; font-weight: 600;">Enteros:</label>
                                     <input type="number" name="edit_num_cont_integers" id="edit_num_cont_integers" style="width: 100%; margin-top: 4px;" min="1" max="20">
-                                    <span style="font-size: 11px; color: #64748b; display: block; margin-top: 4px;">Rango admitido: 1 a 20.</span>
                                 </div>
                                 <div style="flex: 1;">
                                     <label style="font-size: 13px; font-weight: 600;">Decimales:</label>
                                     <input type="number" name="edit_num_cont_decimals" id="edit_num_cont_decimals" style="width: 100%; margin-top: 4px;" min="0" max="20">
-                                    <span style="font-size: 11px; color: #64748b; display: block; margin-top: 4px;">Rango admitido: 0 a 20.</span>
                                 </div>
                             </div>
-                            <span style="font-size: 11px; color: #64748b; display: block; margin-top: 8px;"><strong>Alta Precisión:</strong> Soporta hasta 20 enteros y 20 decimales.</span>
                         </div>
 
                         <div id="edit_conf_date" style="display: none;">
                             <span style="font-size: 13px; color: #334155; display: block; line-height: 1.4;">
-                                <strong>Calendario Estándar:</strong> El sistema utiliza el <strong>Calendario Gregoriano</strong>. Los datos se almacenarán internamente en formato estructurado estandarizado (YYYY-MM-DD).
+                                Formato de guardado interno: YYYY-MM-DD.
                             </span>
                         </div>
 
                         <div id="edit_conf_time" style="display: none;">
+                            <div style="margin-bottom: 15px;">
+                                <label style="font-weight: 600; font-size: 13px;">Formato de Visualización:</label>
+                                <select name="edit_time_format" id="edit_time_format" style="width: 100%; margin-top: 4px;">
+                                    <option value="12h">12 Horas (AM / PM)</option>
+                                    <option value="24h">24 Horas (Militar)</option>
+                                </select>
+                            </div>
+
                             <label style="font-weight: 600; font-size: 13px;">Zona Horaria de Visualización:</label>
                             <select name="edit_time_zone_default" id="edit_time_zone_default" style="width: 100%; margin-top: 4px;">
                                 <?php echo wp_timezone_choice( wp_timezone_string() ); ?>
                             </select>
-                            <span style="font-size: 11px; color: #64748b; display: block; margin-top: 4px;">
-                                El sistema almacenará la hora internamente en <strong>UTC (GMT 0)</strong> para garantizar la integridad analítica. La zona seleccionada aquí solo se utilizará para renderizar visualmente los datos.
+                            <span style="font-size: 11px; color: #64748b; display: block; margin-top: 4px; line-height: 1.4;">
+                                El sistema almacenará la hora internamente en <strong>UTC (GMT 0)</strong> para garantizar la integridad analítica de los datos. La zona horaria y formato seleccionados aquí solo se utilizarán para renderizar visualmente los datos.
                             </span>
                         </div>
 
                         <div id="edit_conf_categorical" style="display: none;">
                             <label style="font-weight: 600; font-size: 13px;">Opciones Disponibles:</label>
                             <textarea name="edit_categorical_options" id="edit_categorical_options" rows="5" style="width: 100%; margin-top: 4px;"></textarea>
-                            <span style="font-size: 11px; color: #64748b; display: block; margin-top: 4px;">Ingrese <strong>una opción por línea</strong>. Evite dejar líneas en blanco.</span>
                             
                             <div style="margin-top: 15px;">
                                 <label style="font-weight: 600; font-size: 13px;">Opción por defecto:</label>
@@ -497,7 +525,6 @@ $human_types = [
                             <div id="edit_box_manual_codes" style="display: none; margin-top: 10px;">
                                 <label style="font-weight: 600; font-size: 13px; color: var(--crea-danger);">Códigos Manuales Asignados:</label>
                                 <textarea name="edit_categorical_manual_codes" id="edit_categorical_manual_codes" rows="3" style="width: 100%; margin-top: 4px;"></textarea>
-                                <span style="font-size: 11px; color: #64748b; display: block; margin-top: 4px;">Ingrese un código en cada línea, respetando el orden exacto de las opciones. Admite valores alfanuméricos (Ej. <code>1</code>, <code>99</code>, <code>CVE_01</code>).</span>
                             </div>
                         </div>
 
@@ -512,11 +539,20 @@ $human_types = [
                             
                             <div style="margin-top: 15px;">
                                 <label style="font-weight: 600; font-size: 13px;">2. Variable a extraer:</label>
-                                <input type="text" name="edit_rel_field_slug" id="edit_rel_field_slug" style="width: 100%;" placeholder="Slug de la variable maestra">
+                                <input type="text" name="edit_rel_field_slug" id="edit_rel_field_slug" style="width: 100%; margin-top: 4px;">
                             </div>
 
                             <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #cbd5e1;">
-                                <label style="font-weight: 600; font-size: 13px;">3. Condicional de Filtrado (Opcional):</label>
+                                <label style="font-weight: 600; font-size: 13px;">3. Formato de Salida (Visualización):</label>
+                                <select name="edit_rel_output_format" id="edit_rel_output_format" style="width: 100%; margin-top: 4px;">
+                                    <option value="select">Menú Desplegable</option>
+                                    <option value="radio">Botones de Radio</option>
+                                    <option value="checkbox">Casillas de Verificación (Múltiple)</option>
+                                </select>
+                            </div>
+
+                            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #cbd5e1;">
+                                <label style="font-weight: 600; font-size: 13px;">4. Condicional de Filtrado (Opcional):</label>
                                 <div style="display: flex; gap: 5px; align-items: center; margin-top: 4px;">
                                     <input type="text" name="edit_rel_cond_field" id="edit_rel_cond_field" style="width: 120px; font-size: 12px;" placeholder="Variable"> = 
                                     <input type="text" name="edit_rel_cond_value" id="edit_rel_cond_value" style="width: 80px; font-size: 12px;" placeholder="Valor">
@@ -573,7 +609,7 @@ $human_types = [
     <div class="crea-modal-content" style="max-width: 500px;">
         <span class="dashicons dashicons-no-alt crea-modal-close"></span>
         <h2 style="margin-top:0; border-bottom: 1px solid #E2E8F0; padding-bottom: 10px;">Reordenar Variables</h2>
-        <p style="font-size: 13px; color: #64748b;">Arrastra y suelta las variables para cambiar el orden exacto en que se mostrarán y exportarán. Tienes libertad total para ordenar, incluyendo los IDs de sistema.</p>
+        <p style="font-size: 13px; color: #64748b;">Arrastra y suelta las variables para cambiar el orden exacto en que se mostrarán y exportarán.</p>
         
         <ul id="crea-sortable-vars" style="margin: 15px 0; padding: 0; list-style: none;">
             <?php foreach($variables as $v): 
@@ -620,17 +656,21 @@ document.addEventListener('DOMContentLoaded', function() {
         fType.addEventListener('change', function() {
             var val = this.value;
             wrapConfig.style.display = 'none'; 
-            document.getElementById('conf_text').style.display = 'none'; 
-            document.getElementById('conf_html').style.display = 'none';
-            document.getElementById('conf_num_discrete').style.display = 'none'; 
-            document.getElementById('conf_num_continuous').style.display = 'none'; 
-            document.getElementById('conf_time').style.display = 'none';
-            document.getElementById('conf_date').style.display = 'none'; 
-            document.getElementById('conf_categorical').style.display = 'none'; 
-            document.getElementById('conf_relation').style.display = 'none';
+            
+            // Ocultar todos los sub-bloques
+            ['conf_filter', 'conf_text', 'conf_html', 'conf_num_discrete', 'conf_num_continuous', 'conf_time', 'conf_date', 'conf_categorical', 'conf_relation'].forEach(id => {
+                let el = document.getElementById(id);
+                if(el) el.style.display = 'none';
+            });
 
             if (!val) return;
             wrapConfig.style.display = 'block';
+
+            // ☀️ Lógica para mostrar Filtro en variables permitidas
+            var filterTypes = ['num_discrete', 'num_continuous', 'date', 'time', 'select', 'radio', 'checkbox'];
+            if (filterTypes.includes(val)) {
+                document.getElementById('conf_filter').style.display = 'block';
+            }
 
             var textMaxInput = document.getElementById('text_max_length');
 
@@ -640,9 +680,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('desc_text_long').style.display = 'none';
                 textMaxInput.setAttribute('min', '1');
                 textMaxInput.setAttribute('max', '255');
-                if(!textMaxInput.value || parseInt(textMaxInput.value) > 255 || parseInt(textMaxInput.value) < 1) {
-                    textMaxInput.value = '255';
-                }
+                if(!textMaxInput.value || parseInt(textMaxInput.value) > 255 || parseInt(textMaxInput.value) < 1) textMaxInput.value = '255';
             } 
             else if (val === 'text_long') { 
                 document.getElementById('conf_text').style.display = 'block'; 
@@ -650,9 +688,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('desc_text_long').style.display = 'block';
                 textMaxInput.setAttribute('min', '500');
                 textMaxInput.setAttribute('max', '5000');
-                if(!textMaxInput.value || parseInt(textMaxInput.value) > 5000 || parseInt(textMaxInput.value) < 500) {
-                    textMaxInput.value = '1000';
-                }
+                if(!textMaxInput.value || parseInt(textMaxInput.value) > 5000 || parseInt(textMaxInput.value) < 500) textMaxInput.value = '1000';
             } 
             else if (val === 'text_html') { document.getElementById('conf_html').style.display = 'block'; } 
             else if (val === 'num_discrete') { document.getElementById('conf_num_discrete').style.display = 'block'; } 
@@ -699,10 +735,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function applyEditTypeChange(val) {
         document.getElementById('edit_config_wrapper').style.display = 'none';
-        ['edit_conf_text', 'edit_conf_html', 'edit_conf_num_discrete', 'edit_conf_num_continuous', 'edit_conf_date', 'edit_conf_time', 'edit_conf_categorical', 'edit_conf_relation'].forEach(id => document.getElementById(id).style.display = 'none');
+        
+        ['edit_conf_filter', 'edit_conf_text', 'edit_conf_html', 'edit_conf_num_discrete', 'edit_conf_num_continuous', 'edit_conf_date', 'edit_conf_time', 'edit_conf_categorical', 'edit_conf_relation'].forEach(id => document.getElementById(id).style.display = 'none');
         
         if (!val) return;
         document.getElementById('edit_config_wrapper').style.display = 'block';
+
+        // ☀️ Mostrar Filtro en edición
+        var filterTypes = ['num_discrete', 'num_continuous', 'date', 'time', 'select', 'radio', 'checkbox'];
+        if (filterTypes.includes(val)) {
+            document.getElementById('edit_conf_filter').style.display = 'block';
+        }
 
         var editTextMaxInput = document.getElementById('edit_text_max_length');
 
@@ -712,9 +755,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('edit_desc_text_long').style.display = 'none';
             editTextMaxInput.setAttribute('min', '1');
             editTextMaxInput.setAttribute('max', '255');
-            if(!editTextMaxInput.value) {
-                editTextMaxInput.value = '255';
-            }
+            if(!editTextMaxInput.value) editTextMaxInput.value = '255';
         } 
         else if (val === 'text_long') { 
             document.getElementById('edit_conf_text').style.display = 'block'; 
@@ -722,9 +763,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('edit_desc_text_long').style.display = 'block';
             editTextMaxInput.setAttribute('min', '500');
             editTextMaxInput.setAttribute('max', '5000');
-            if(!editTextMaxInput.value) {
-                editTextMaxInput.value = '1000';
-            }
+            if(!editTextMaxInput.value) editTextMaxInput.value = '1000';
         } 
         else if (val === 'text_html') { document.getElementById('edit_conf_html').style.display = 'block'; } 
         else if (val === 'num_discrete') { document.getElementById('edit_conf_num_discrete').style.display = 'block'; } 
@@ -790,12 +829,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
             applyEditTypeChange(data.field_type);
 
-            // Cargar los valores del JSON después de preparar la vista
+            // Cargar los valores del JSON
             if (parsedConfig) {
+                // ☀️ Carga del Filtro
+                if (parsedConfig.is_filterable !== undefined) document.getElementById('edit_is_filterable').value = parsedConfig.is_filterable;
+                else document.getElementById('edit_is_filterable').value = '0';
+
                 if (parsedConfig.max_length) document.getElementById('edit_text_max_length').value = parsedConfig.max_length;
                 if (parsedConfig.digits) document.getElementById('edit_num_disc_digits').value = parsedConfig.digits;
                 if (parsedConfig.integers) document.getElementById('edit_num_cont_integers').value = parsedConfig.integers;
                 if (parsedConfig.decimals) document.getElementById('edit_num_cont_decimals').value = parsedConfig.decimals;
+                
+                // ☀️ Carga de Hora
+                if (parsedConfig.time_format) document.getElementById('edit_time_format').value = parsedConfig.time_format;
                 if (parsedConfig.time_zone) document.getElementById('edit_time_zone_default').value = parsedConfig.time_zone;
                 
                 if (parsedConfig.options) {
@@ -817,8 +863,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (parsedConfig.manual_codes) document.getElementById('edit_categorical_manual_codes').value = parsedConfig.manual_codes;
                 }
 
+                // ☀️ Carga de Relaciones
                 if (parsedConfig.rel_base) document.getElementById('edit_rel_base_slug').value = parsedConfig.rel_base;
                 if (parsedConfig.rel_field) document.getElementById('edit_rel_field_slug').value = parsedConfig.rel_field;
+                if (parsedConfig.rel_output_format) document.getElementById('edit_rel_output_format').value = parsedConfig.rel_output_format;
                 if (parsedConfig.rel_cond_field) document.getElementById('edit_rel_cond_field').value = parsedConfig.rel_cond_field;
                 if (parsedConfig.rel_cond_value) document.getElementById('edit_rel_cond_value').value = parsedConfig.rel_cond_value;
             }

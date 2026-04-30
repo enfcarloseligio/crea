@@ -40,7 +40,7 @@ $front_colors = wp_parse_args( get_option( 'crea_front_colors', [] ), $default_f
     .crea-tema-flex { display: flex; gap: 25px; flex-wrap: wrap; }
     .crea-tema-col label { display: block; margin-bottom: 5px; font-weight: 600; color: #50575e; }
 
-    /* ☀️ Variables CSS en vivo para el Frontend (Ahora en :root para permitir la edición en tiempo real con JS) */
+    /* Variables CSS en vivo para el Frontend (root para permitir la edición en tiempo real con JS) */
     :root {
         --crea-front-primary: <?php echo esc_attr($front_colors['primary']); ?>;
         --crea-front-th-bg: <?php echo esc_attr($front_colors['th_bg']); ?>;

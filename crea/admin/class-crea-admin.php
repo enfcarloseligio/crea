@@ -90,14 +90,17 @@ class CREA_Admin {
             'name'     => $current_wp_user->display_name
         );
 
+        // ☀️ NUEVO: Diccionario de etiquetas actualizado para Auditoría
         $config_labels = [
             'max_length' => 'Caracteres Máximos', 'digits' => 'Dígitos Enteros',
             'integers' => 'Dígitos Enteros', 'decimals' => 'Decimales',
-            'time_zone' => 'Zona Horaria', 'options' => 'Opciones de Catálogo',
-            'default' => 'Selección por Defecto', 'id_type' => 'Tipo de Codificación',
-            'manual_codes' => 'Códigos Manuales', 'rel_base' => 'Base Maestra',
-            'rel_field' => 'Variable a Extraer', 'rel_cond_field' => 'Campo Condicional',
-            'rel_cond_value' => 'Valor Condicional'
+            'time_zone' => 'Zona Horaria', 'time_format' => 'Formato de Visualización (Hora)',
+            'options' => 'Opciones de Catálogo', 'default' => 'Selección por Defecto', 
+            'id_type' => 'Tipo de Codificación', 'manual_codes' => 'Códigos Manuales', 
+            'rel_base' => 'Base Maestra', 'rel_field' => 'Variable a Extraer', 
+            'rel_output_format' => 'Formato de Salida (Visualización)',
+            'rel_cond_field' => 'Campo Condicional', 'rel_cond_value' => 'Valor Condicional',
+            'is_filterable' => 'Filtro Analítico Habilitado'
         ];
 
         if ( isset($_GET['crea_export']) && isset($_GET['base_slug']) && current_user_can('manage_options') ) {
@@ -319,6 +322,11 @@ class CREA_Admin {
 
             $config = [];
             
+            // ☀️ NUEVO: Atrapamos el Filtro al crear
+            if (isset($_POST['is_filterable'])) {
+                $config['is_filterable'] = intval($_POST['is_filterable']);
+            }
+            
             $diff = [
                 'Nombre Variable' => ['old' => 'N/A', 'new' => $field_name],
                 'Slug SQL (Columna)' => ['old' => 'N/A', 'new' => $field_slug],
@@ -335,6 +343,7 @@ class CREA_Admin {
                 $config['decimals'] = intval($_POST['num_cont_decimals']);
             } elseif ($field_type === 'time') {
                 $config['time_zone'] = sanitize_text_field($_POST['time_zone_default']);
+                $config['time_format'] = sanitize_text_field($_POST['time_format']); // ☀️ NUEVO
             } elseif (in_array($field_type, ['select', 'radio', 'checkbox'])) {
                 $config['options'] = sanitize_textarea_field($_POST['categorical_options']);
                 $config['default'] = isset($_POST['categorical_default']) ? array_map('sanitize_text_field', $_POST['categorical_default']) : [];
@@ -345,6 +354,7 @@ class CREA_Admin {
             } elseif ($field_type === 'relation') {
                 $config['rel_base'] = sanitize_text_field($_POST['rel_base_slug']);
                 $config['rel_field'] = sanitize_text_field($_POST['rel_field_slug']);
+                $config['rel_output_format'] = sanitize_text_field($_POST['rel_output_format']); // ☀️ NUEVO
                 $config['rel_cond_field'] = sanitize_text_field($_POST['rel_cond_field']);
                 $config['rel_cond_value'] = sanitize_text_field($_POST['rel_cond_value']);
             }
@@ -353,6 +363,10 @@ class CREA_Admin {
                 $lbl = isset($config_labels[$k]) ? $config_labels[$k] : ucwords(str_replace('_', ' ', $k));
                 if (is_array($v)) $v = empty($v) ? 'Ninguna' : implode(", ", $v);
                 $v = str_replace("\n", ", ", (string)$v);
+                
+                // Formateos especiales para auditoría legible
+                if ($k === 'is_filterable') $v = ($v == 1) ? 'Sí (Habilitado)' : 'No (Deshabilitado)';
+                
                 $diff[$lbl] = ['old' => 'N/A', 'new' => ($v === '') ? 'Vacío' : $v];
             }
 
@@ -375,7 +389,6 @@ class CREA_Admin {
 
             if ($has_twin) {
                 $twin_type = ($config['id_type'] === 'auto') ? 'num_discrete' : 'text_short';
-                // Generamos BIGINT para los auto IDs para asegurar máxima compatibilidad estadística
                 $twin_conf = ($config['id_type'] === 'auto') ? wp_json_encode(['digits'=>20]) : wp_json_encode(['max_length'=>255]);
                 $wpdb->insert($table_fields, [
                     'form_id' => $base_id, 'field_name' => 'ID ' . $field_name, 'field_slug' => 'id_' . $field_slug,
@@ -397,7 +410,6 @@ class CREA_Admin {
             ) {$wpdb->get_charset_collate()};";
             dbDelta( $sql_physical );
 
-            // LÓGICA DINÁMICA DE SQL (DECIMAL DE ALTA PRECISIÓN / BIG DATA)
             $sql_type = "TEXT";
             if (in_array($field_type, ['text_short', 'select', 'radio', 'relation'])) {
                 $sql_type = "VARCHAR(" . (isset($config['max_length']) ? $config['max_length'] : 255) . ")";
@@ -419,7 +431,6 @@ class CREA_Admin {
             if (empty($col_check)) {
                 $wpdb->query("ALTER TABLE $physical_table ADD COLUMN $field_slug $sql_type");
                 if ($has_twin) {
-                    // ☀️ ID Generado automáticamente en BIG DATA SQL (20 dígitos en lugar de INT)
                     $twin_sql_type = ($config['id_type'] === 'auto') ? 'DECIMAL(20,0)' : 'VARCHAR(255)';
                     $wpdb->query("ALTER TABLE $physical_table ADD COLUMN id_$field_slug $twin_sql_type");
                 }
@@ -460,6 +471,12 @@ class CREA_Admin {
             $new_req = isset($_POST['edit_is_required']) ? 1 : 0;
 
             $config = [];
+            
+            // ☀️ NUEVO: Atrapamos el Filtro en edición
+            if (isset($_POST['edit_is_filterable'])) {
+                $config['is_filterable'] = intval($_POST['edit_is_filterable']);
+            }
+
             if (in_array($new_type, ['text_short', 'text_long'])) {
                 $config['max_length'] = intval($_POST['edit_text_max_length']);
             } elseif ($new_type === 'num_discrete') {
@@ -469,6 +486,7 @@ class CREA_Admin {
                 $config['decimals'] = intval($_POST['edit_num_cont_decimals']);
             } elseif ($new_type === 'time') {
                 $config['time_zone'] = sanitize_text_field($_POST['edit_time_zone_default']);
+                $config['time_format'] = sanitize_text_field($_POST['edit_time_format']); // ☀️ NUEVO
             } elseif (in_array($new_type, ['select', 'radio', 'checkbox'])) {
                 $config['options'] = sanitize_textarea_field($_POST['edit_categorical_options']);
                 $config['default'] = isset($_POST['edit_categorical_default']) ? array_map('sanitize_text_field', $_POST['edit_categorical_default']) : [];
@@ -477,6 +495,7 @@ class CREA_Admin {
             } elseif ($new_type === 'relation') {
                 $config['rel_base'] = sanitize_text_field($_POST['edit_rel_base_slug']);
                 $config['rel_field'] = sanitize_text_field($_POST['edit_rel_field_slug']);
+                $config['rel_output_format'] = sanitize_text_field($_POST['edit_rel_output_format']); // ☀️ NUEVO
                 $config['rel_cond_field'] = sanitize_text_field($_POST['edit_rel_cond_field']);
                 $config['rel_cond_value'] = sanitize_text_field($_POST['edit_rel_cond_value']);
             }
@@ -509,6 +528,12 @@ class CREA_Admin {
                 
                 if ($v_old !== $v_new) {
                     $lbl = isset($config_labels[$k]) ? $config_labels[$k] : ucwords(str_replace('_', ' ', $k));
+                    
+                    if ($k === 'is_filterable') {
+                        $v_old = ($v_old == 1) ? 'Sí (Habilitado)' : 'No (Deshabilitado)';
+                        $v_new = ($v_new == 1) ? 'Sí (Habilitado)' : 'No (Deshabilitado)';
+                    }
+                    
                     $diff[$lbl] = ['old' => ($v_old === '') ? 'Vacío' : $v_old, 'new' => ($v_new === '') ? 'Vacío' : $v_new];
                 }
             }
@@ -518,7 +543,6 @@ class CREA_Admin {
                     $old_id_type = isset($old_conf_arr['id_type']) ? $old_conf_arr['id_type'] : 'none';
                     $new_id_type = isset($config['id_type']) ? $config['id_type'] : 'none';
 
-                    // ☀️ LÓGICA DINÁMICA DE SQL (EDICIÓN)
                     $sql_type = "TEXT";
                     if (in_array($new_type, ['text_short', 'select', 'radio', 'relation'])) { 
                         $sql_type = "VARCHAR(" . (isset($config['max_length']) ? $config['max_length'] : 255) . ")"; 
@@ -550,7 +574,6 @@ class CREA_Admin {
                         $diff['Columna de Sistema (ID)'] = ['old' => 'Activa ('.$twin_slug_old.')', 'new' => 'Eliminada permanentemente por cambio de codificación'];
                     } 
                     elseif ($old_id_type === 'none' && in_array($new_id_type, ['auto', 'manual'])) {
-                        // ☀️ ID Generado automáticamente en BIG DATA SQL (20 dígitos)
                         $twin_sql_type = ($new_id_type === 'auto') ? 'DECIMAL(20,0)' : 'VARCHAR(255)';
                         $twin_type_str = ($new_id_type === 'auto') ? 'num_discrete' : 'text_short';
                         $twin_conf_str = ($new_id_type === 'auto') ? wp_json_encode(['digits'=>20]) : wp_json_encode(['max_length'=>255]);
@@ -628,7 +651,6 @@ class CREA_Admin {
             exit;
         }
 
-        // ☀️ AQUI SE GUARDA LA APARIENCIA (AÑADIDOS LOS COLORES FRONTEND)
         if ( isset( $_POST['crea_save_appearance'] ) && isset( $_POST['crea_save_appearance_nonce'] ) ) {
             if ( ! wp_verify_nonce( $_POST['crea_save_appearance_nonce'], 'crea_save_appearance_action' ) ) wp_die( 'Error de seguridad.' );
             $admin_colors = array(
