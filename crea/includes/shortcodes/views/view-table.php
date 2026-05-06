@@ -40,6 +40,9 @@ foreach ( $fields as $f ) {
 
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
 <style id="crea-dynamic-styles-<?php echo $base_id; ?>"></style>
 
@@ -55,11 +58,37 @@ foreach ( $fields as $f ) {
     }
 
     .crea-table-wrapper { background: transparent; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); margin-bottom: 30px; overflow: visible; position: relative;}
+    
+    /* ☀️ ESTILOS PARA API NATIVA DE PANTALLA COMPLETA */
+    .crea-table-wrapper:fullscreen {
+        background: #fff; /* Fondo blanco garantizado */
+        width: 100vw;
+        height: 100vh;
+        margin: 0;
+        padding: 0;
+        border: none;
+        border-radius: 0;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto; /* Permite scroll general si el contenido excede */
+    }
+    .crea-table-wrapper:fullscreen .crea-table-responsive {
+        flex: 1;
+        max-height: none !important; /* Elimina límite de altura para llenar pantalla */
+    }
+    /* Soporte para webkit */
+    .crea-table-wrapper:-webkit-full-screen { background: #fff; display: flex; flex-direction: column; overflow-y: auto; }
+    .crea-table-wrapper:-webkit-full-screen .crea-table-responsive { flex: 1; max-height: none !important; }
+
     .crea-table-header { padding: 20px 25px; border-bottom: 1px solid #e2e8f0; background: transparent; display: flex; justify-content: space-between; align-items: flex-end;}
     .crea-table-header h2 { margin: 0 0 5px 0; }
     .crea-table-header p { margin: 0; opacity: 0.8; }
 
-    /* FILTROS AVANZADOS */
+    /* FILTROS AVANZADOS Y ACCIONES HEADER */
+    .crea-header-actions { display: flex; gap: 10px; align-items: center; }
+    .crea-btn-fullscreen { background: transparent; border: none; cursor: pointer; color: #64748b; padding: 5px; transition: color 0.2s; display: flex; align-items: center; justify-content: center; }
+    .crea-btn-fullscreen:hover { color: var(--crea-front-primary); }
+
     .crea-btn-toggle-filters { background: transparent; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 13px; transition: all 0.2s; display: flex; align-items: center; gap: 5px; color: inherit; height: 32px; box-sizing: border-box; }
     .crea-btn-toggle-filters:hover { border-color: var(--crea-front-primary); color: var(--crea-front-primary); }
     .crea-filters-panel { background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 20px 25px; display: none; }
@@ -76,7 +105,6 @@ foreach ( $fields as $f ) {
     .crea-filter-col input[type="date"] { width: 100%; padding: 0 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: inherit; font-size: 13px; height: 30px; box-sizing: border-box; outline: none; background: #fff; }
     .crea-filter-col input[type="date"]:focus { border-color: var(--crea-front-primary); }
 
-    /* SWITCH TOGGLE PARA FECHAS */
     .crea-switch-container { display: flex; align-items: center; gap: 10px; height: 30px; }
     .crea-switch { position: relative; display: inline-block; width: 36px; height: 20px; margin: 0; }
     .crea-switch input { opacity: 0; width: 0; height: 0; margin: 0; }
@@ -87,7 +115,6 @@ foreach ( $fields as $f ) {
     .crea-switch-lbl { font-size: 13px; color: #64748b; font-weight: normal; transition: color 0.3s; cursor: pointer; user-select: none; }
     .crea-switch-lbl.active { color: var(--crea-front-primary); font-weight: 600; }
 
-    /* INTEGRACIÓN PERFECTA DE SELECT2 EN FILTROS */
     .crea-filter-col .select2-container .select2-selection--single { height: 30px !important; border-color: #cbd5e1 !important; display: flex; align-items: center; background: #fff; border-radius: 4px; }
     .crea-filter-col .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: normal !important; color: #334155 !important; font-size: 13px; padding-left: 10px; }
     .crea-filter-col .select2-container--default .select2-selection--single .select2-selection__arrow { height: 28px !important; }
@@ -100,19 +127,22 @@ foreach ( $fields as $f ) {
         .crea-dynamic-filters-grid { grid-template-columns: 1fr; }
     }
 
-    /* TOOLBAR Y CONTROLES */
+    /* TOOLBAR Y CONTROLES DE EXPORTACIÓN */
     .crea-table-toolbar { padding: 15px 25px; border-bottom: 1px solid #e2e8f0; background: transparent; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
     .crea-table-controls { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
     .crea-control-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
     .crea-table-controls select, .crea-search-box input { padding: 0 10px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; outline: none; height: 30px; box-sizing: border-box; transition: border-color 0.2s; font-family: inherit; font-size: 13px; }
     .crea-table-controls select:focus, .crea-search-box input:focus { border-color: var(--crea-front-primary); }
 
+    .crea-export-group { display: flex; gap: 5px; align-items: center; border-left: 1px solid #e2e8f0; padding-left: 15px; margin-left: 5px; }
+    .crea-btn-export { background: #f8fafc; border: 1px solid #cbd5e1; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600; color: #334155; transition: all 0.2s; display: flex; align-items: center; font-family: inherit; }
+    .crea-btn-export:hover { background: #f1f5f9; border-color: var(--crea-front-primary); color: var(--crea-front-primary); }
+
     .crea-col-selector { position: relative; }
     .crea-col-dropdown { position: absolute; top: 100%; left: 0; background: #fff; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 4px; padding: 10px; z-index: 100; display: none; min-width: 200px; max-height: 300px; overflow-y: auto; margin-top: 5px; }
     .crea-col-dropdown label { display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 5px 0; cursor: pointer; }
     .crea-col-dropdown label:hover { background: #f8fafc; }
 
-    /* TOOLBAR SELECT2 FIX */
     .crea-control-item .select2-container .select2-selection--single { height: 30px !important; border-color: #cbd5e1 !important; display: flex; align-items: center; border-radius: 4px; }
     .crea-control-item .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: normal !important; color: #334155; font-size: 13px; }
     .crea-control-item .select2-container--default .select2-selection--single .select2-selection__arrow { height: 28px !important; }
@@ -134,7 +164,6 @@ foreach ( $fields as $f ) {
 
     .crea-frontend-table td.crea-cell-sys { font-weight: 600; opacity: 0.8; }
     .crea-frontend-table td.crea-cell-longtext { max-width: 350px; white-space: normal; word-wrap: break-word; line-height: 1.5; }
-
     .crea-time-sys { font-weight: 600; }
     .crea-time-user { font-size: 0.85em; opacity: 0.6; margin-top: 2px; }
 
@@ -159,10 +188,16 @@ foreach ( $fields as $f ) {
             <h2><?php echo esc_html( $form['form_name'] ); ?></h2>
             <p><?php echo $is_editor_mode ? 'Panel de Corrección y Visualización (Editor)' : 'Matriz de Datos Estructurada'; ?></p>
         </div>
-        <button type="button" class="crea-btn-toggle-filters" id="btn-toggle-filters">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-            Filtros Avanzados
-        </button>
+        
+        <div class="crea-header-actions">
+            <button type="button" class="crea-btn-toggle-filters" id="btn-toggle-filters">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                Filtros Avanzados
+            </button>
+            <button type="button" class="crea-btn-fullscreen" id="btn-fullscreen-<?php echo $base_id; ?>" title="Pantalla Completa Nativa">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+            </button>
+        </div>
     </div>
 
     <?php if ( empty($records) ) : ?>
@@ -181,7 +216,6 @@ foreach ( $fields as $f ) {
                     
                     <div class="crea-filter-col" style="grid-column: span 2;">
                         <label class="crea-flt-lbl">Fecha de Captura</label>
-                        
                         <div class="crea-switch-container">
                             <span class="crea-switch-lbl active" id="lbl-switch-month">Año/Mes</span>
                             <label class="crea-switch" title="Cambiar modo de fecha">
@@ -247,7 +281,6 @@ foreach ( $fields as $f ) {
             <?php if (!$is_logged_in && empty($dynamic_filters)) : ?>
                 <div style="font-size: 13px; color: #64748b; padding: 10px 0;">No hay filtros públicos configurados para esta tabla.</div>
             <?php endif; ?>
-
         </div>
 
         <div class="crea-table-toolbar">
@@ -270,7 +303,7 @@ foreach ( $fields as $f ) {
                 
                 <div class="crea-control-item">
                     <span>Mi Zona Horaria:</span>
-                    <select class="crea-tz-select" style="width: 200px;">
+                    <select class="crea-tz-select" style="width: 150px;">
                         <option value="UTC">UTC (Servidor)</option>
                         <?php foreach($tzlist as $tz) : ?><option value="<?php echo esc_attr($tz); ?>"><?php echo esc_html($tz); ?></option><?php endforeach; ?>
                     </select>
@@ -279,10 +312,16 @@ foreach ( $fields as $f ) {
                     </label>
                 </div>
 
+                <div class="crea-export-group">
+                    <span style="font-size:12px; color:#64748b; font-weight:600;">Exportar:</span>
+                    <button type="button" class="crea-btn-export" data-format="csv" title="Descargar en formato CSV">CSV</button>
+                    <button type="button" class="crea-btn-export" data-format="xlsx" title="Descargar en formato Excel">XLSX</button>
+                    <button type="button" class="crea-btn-export" data-format="pdf" title="Descargar en formato PDF">PDF</button>
+                    <button type="button" class="crea-btn-export" data-format="json" title="Descargar datos en formato JSON">JSON</button>
+                </div>
+
             </div>
             
-            <div class="crea-pagination"><div id="crea-pagination-top" class="crea-pagination-controls"></div></div>
-
             <div class="crea-search-box">
                 <svg class="crea-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                 <input type="text" class="crea-search-input" placeholder="Buscar general..." autocomplete="off" data-lpignore="true" data-form-type="other" spellcheck="false" role="presentation">
@@ -340,7 +379,6 @@ foreach ( $fields as $f ) {
                             $slug = $field['field_slug'];
                             $value = isset($row[$slug]) ? $row[$slug] : '';
                             $conf = json_decode($field['config'], true) ?: [];
-                            
                             $cell_class = in_array($field['field_type'], ['text_long', 'text_html']) ? 'crea-cell-longtext' : '';
                             
                             if ($field['field_type'] === 'time') {
@@ -367,15 +405,63 @@ foreach ( $fields as $f ) {
     <?php endif; ?>
 </div>
 
+<div id="crea-export-limit-modal-<?php echo $base_id; ?>" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15,23,42,0.8); z-index: 9999999; display: none; align-items: center; justify-content: center; backdrop-filter: blur(3px);">
+    <div style="background: #fff; border-radius: 8px; max-width: 450px; width: 90%; text-align: center; padding: 40px 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+        <svg viewBox="0 0 24 24" width="60" height="60" fill="none" stroke="#f59e0b" stroke-width="2" style="margin-bottom: 20px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        <h3 style="margin: 0 0 15px 0; font-size: 1.5em; color: #0f172a; font-family: inherit;">Límite Superado</h3>
+        <p style="color: #475569; font-size: 14px; line-height: 1.6; margin-bottom: 25px;">
+            Estás intentando exportar <strong id="crea-export-count-<?php echo $base_id; ?>" style="color: #0f172a; font-size: 16px;">0</strong> registros.<br><br>
+            Esto supera la capacidad segura de <strong>5,000 registros</strong> para el front-end. Para exportaciones masivas, contacta al administrador del sistema o ingresa al portal de datos abiertos.
+        </p>
+        <button type="button" class="crea-btn-close-limit" style="background: var(--crea-front-primary); color: #fff; border: none; padding: 10px 25px; border-radius: 4px; font-weight: 600; cursor: pointer; font-family: inherit;">Entendido</button>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const wrapper = document.getElementById('crea-visor-<?php echo $base_id; ?>');
     if (!wrapper) return;
 
     const baseId = '<?php echo $base_id; ?>';
+    const baseName = '<?php echo esc_js($form['form_slug']); ?>';
+    const baseNameHuman = '<?php echo esc_js($form['form_name']); ?>';
     const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
     const isEditorMode = <?php echo $is_editor_mode ? 'true' : 'false'; ?>;
     
+    // --- 0. LÓGICA DE PANTALLA COMPLETA NATIVA ---
+    const btnFullscreen = document.getElementById('btn-fullscreen-<?php echo $base_id; ?>');
+    if (btnFullscreen) {
+        btnFullscreen.addEventListener('click', () => {
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                // Entrar a Fullscreen
+                if (wrapper.requestFullscreen) {
+                    wrapper.requestFullscreen();
+                } else if (wrapper.webkitRequestFullscreen) { /* Safari */
+                    wrapper.webkitRequestFullscreen();
+                }
+            } else {
+                // Salir de Fullscreen
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) { /* Safari */
+                    document.webkitExitFullscreen();
+                }
+            }
+        });
+
+        // Escuchar el evento del navegador para cambiar el ícono
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+
+        function handleFullscreenChange() {
+            if (document.fullscreenElement || document.webkitFullscreenElement) {
+                btnFullscreen.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path></svg>`;
+            } else {
+                btnFullscreen.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>`;
+            }
+        }
+    }
+
     // --- 1. LÓGICA DE OCULTAR COLUMNAS ---
     const btnToggleCols = document.getElementById('btn-toggle-cols');
     const colDropdown = document.getElementById('crea-col-dropdown');
@@ -408,6 +494,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!chk.checked) {
                 const nth = parseInt(chk.value) + 1;
                 cssStr += `#crea-main-table-${baseId} th:nth-child(${nth}), #crea-main-table-${baseId} td:nth-child(${nth}) { display: none !important; }\n`;
+                ths[parseInt(chk.value)].classList.add('crea-hidden-col-export');
+            } else {
+                ths[parseInt(chk.value)].classList.remove('crea-hidden-col-export');
             }
         });
         dynamicStyles.innerHTML = cssStr;
@@ -481,7 +570,7 @@ document.addEventListener('DOMContentLoaded', function() {
     saveTzCheckbox.addEventListener('change', updateDatesAndTimes);
     updateDatesAndTimes(); 
 
-    // --- 3. LÓGICA DE FILTROS AVANZADOS (SPA + SELECT2) ---
+    // --- 3. LÓGICA DE FILTROS AVANZADOS ---
     const btnToggleFilters = document.getElementById('btn-toggle-filters');
     const filtersPanel = document.getElementById('crea-filters-panel');
     const searchInput = wrapper.querySelector('.crea-search-input');
@@ -500,7 +589,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const fltUser = document.getElementById('flt-user'); 
     const fltDynamics = document.querySelectorAll('.flt-dynamic');
     
-    // ☀️ Diccionario de Meses
     const monthNames = {'01':'Enero','02':'Febrero','03':'Marzo','04':'Abril','05':'Mayo','06':'Junio','07':'Julio','08':'Agosto','09':'Septiembre','10':'Octubre','11':'Noviembre','12':'Diciembre'};
 
     if (btnToggleFilters) {
@@ -509,7 +597,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Toggle de Fecha Moderno
     if (dateSwitch) {
         dateSwitch.addEventListener('change', (e) => {
             const mode = e.target.checked ? 'range' : 'month';
@@ -524,7 +611,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Extracción inteligente de fechas
     if (fltYear) {
         const dateMap = {}; 
         allRows.forEach(row => {
@@ -556,17 +642,13 @@ document.addEventListener('DOMContentLoaded', function() {
             applyFilters();
         };
 
-        if (typeof jQuery !== 'undefined') {
-            jQuery(fltYear).on('change', handleYearChange);
-        } else {
-            fltYear.addEventListener('change', handleYearChange);
-        }
+        if (typeof jQuery !== 'undefined') jQuery(fltYear).on('change', handleYearChange);
+        else fltYear.addEventListener('change', handleYearChange);
         
         fltStartDate.addEventListener('change', applyFilters);
         fltEndDate.addEventListener('change', applyFilters);
     }
     
-    // Rellenar Filtros Dinámicos
     fltDynamics.forEach(select => {
         const slug = select.getAttribute('data-slug');
         const uniqueVals = new Set();
@@ -580,10 +662,8 @@ document.addEventListener('DOMContentLoaded', function() {
         Array.from(uniqueVals).sort().forEach(v => select.appendChild(new Option(v, v)));
     });
 
-    // ☀️ INICIALIZAR SELECT2 EN TODOS LOS FILTROS
     if (typeof jQuery !== 'undefined') {
         jQuery('.crea-filter-select2').select2({ width: '100%', dropdownAutoWidth: true });
-        // Enlazar los cambios de Select2 al motor de filtros
         jQuery('#flt-month, #flt-user, .flt-dynamic').on('change', applyFilters);
     } else {
         if(fltMonth) fltMonth.addEventListener('change', applyFilters);
@@ -646,7 +726,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- 4. MOTOR DE ORDENAMIENTO ---
-    const headers = wrapper.querySelectorAll('th[data-sort]');
     let sortCol = -1;
     let sortAsc = true;
 
@@ -669,18 +748,110 @@ document.addEventListener('DOMContentLoaded', function() {
         renderTable();
     }
 
-    headers.forEach((th) => {
+    ths.forEach((th) => {
         th.addEventListener('click', () => {
             const domIndex = th.cellIndex; 
             if (sortCol === domIndex) sortAsc = !sortAsc;
             else { sortCol = domIndex; sortAsc = true; }
-            headers.forEach(h => h.querySelector('.sort-icon').textContent = '↕');
-            th.querySelector('.sort-icon').textContent = sortAsc ? '↓' : '↑';
+            ths.forEach(h => {
+                const icon = h.querySelector('.sort-icon');
+                if(icon) icon.textContent = '↕';
+            });
+            const activeIcon = th.querySelector('.sort-icon');
+            if(activeIcon) activeIcon.textContent = sortAsc ? '↓' : '↑';
             applySort();
         });
     });
 
-    // --- 5. PAGINACIÓN ---
+    // --- 5. EXPORTACIÓN MASIVA (FRONTEND) ---
+    const btnExports = wrapper.querySelectorAll('.crea-btn-export');
+    const limitModal = document.getElementById('crea-export-limit-modal-<?php echo $base_id; ?>');
+    
+    limitModal.querySelector('.crea-btn-close-limit').addEventListener('click', () => limitModal.style.display = 'none');
+    
+    btnExports.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const format = e.currentTarget.getAttribute('data-format');
+            exportFilteredData(format);
+        });
+    });
+
+    function exportFilteredData(format) {
+        if (filteredRows.length > 5000) {
+            document.getElementById('crea-export-count-<?php echo $base_id; ?>').textContent = filteredRows.length.toLocaleString();
+            limitModal.style.display = 'flex';
+            return;
+        }
+
+        const headersArr = [];
+        const validColIndices = [];
+        
+        ths.forEach((th, index) => {
+            if (th.hasAttribute('data-always-visible')) return; 
+            if (th.classList.contains('crea-hidden-col-export')) return; 
+            headersArr.push(th.textContent.replace('↕', '').trim());
+            validColIndices.push(index);
+        });
+
+        const dataArr = [];
+        filteredRows.forEach(row => {
+            const rowData = [];
+            validColIndices.forEach(idx => {
+                const cell = row.children[idx];
+                let val = cell.getAttribute('data-raw') || cell.getAttribute('data-val') || cell.textContent.trim();
+                rowData.push(val);
+            });
+            dataArr.push(rowData);
+        });
+
+        const dNow = new Date();
+        const strDate = `${dNow.getFullYear()}${(dNow.getMonth()+1).toString().padStart(2,'0')}${dNow.getDate().toString().padStart(2,'0')}`;
+        const fileName = `Exportacion_${baseName}_${strDate}`;
+
+        if (format === 'csv') {
+            let csvContent = headersArr.join(',') + '\n';
+            dataArr.forEach(r => { csvContent += r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',') + '\n'; });
+            const blob = new Blob(["\ufeff", csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob); link.download = fileName + ".csv"; link.click();
+        } 
+        else if (format === 'json') {
+            const jsonArray = dataArr.map(r => {
+                const obj = {};
+                headersArr.forEach((h, i) => obj[h] = r[i]);
+                return obj;
+            });
+            const blob = new Blob([JSON.stringify(jsonArray, null, 2)], { type: 'application/json' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob); link.download = fileName + ".json"; link.click();
+        } 
+        else if (format === 'xlsx') {
+            if (typeof XLSX === 'undefined') return alert('La librería de Excel aún no ha cargado. Por favor, intenta en un segundo.');
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet([headersArr, ...dataArr]);
+            XLSX.utils.book_append_sheet(wb, ws, "Datos Extraídos");
+            XLSX.writeFile(wb, fileName + ".xlsx");
+        } 
+        else if (format === 'pdf') {
+            if (typeof window.jspdf === 'undefined') return alert('La librería de PDF aún no ha cargado.');
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('l', 'pt', 'a4'); 
+            doc.setFontSize(14);
+            doc.text(`Reporte de Datos: ${baseNameHuman}`, 40, 40);
+            doc.setFontSize(10);
+            doc.setTextColor(100);
+            doc.text(`Generado el: ${dNow.toLocaleString('es-MX')} | Total registros: ${filteredRows.length}`, 40, 55);
+            
+            doc.autoTable({
+                head: [headersArr], body: dataArr, startY: 70,
+                styles: { fontSize: 8, cellPadding: 4 },
+                headStyles: { fillColor: [15, 23, 42] }
+            });
+            doc.save(fileName + ".pdf");
+        }
+    }
+
+    // --- 6. PAGINACIÓN ---
     const tbody = wrapper.querySelector('tbody');
     const infoText = wrapper.querySelector('.crea-table-info');
     const paginationTop = wrapper.querySelector('#crea-pagination-top');
