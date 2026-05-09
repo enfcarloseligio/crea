@@ -8,16 +8,7 @@ if ( ! defined( 'WPINC' ) ) { die; }
 
 <?php if ( isset($_GET['crea_msg']) && $_GET['crea_msg'] === 'edit_success' ) : ?>
     <style>
-        .crea-success-banner { 
-            background-color: #dcfce7; 
-            border-left: 4px solid #22c55e; 
-            color: #166534; 
-            padding: 15px 20px; 
-            margin-bottom: 20px; 
-            font-size: 0.95em; 
-            border-radius: 4px; 
-            font-family: inherit;
-        }
+        .crea-success-banner { background-color: #dcfce7; border-left: 4px solid #22c55e; color: #166534; padding: 15px 20px; margin-bottom: 20px; font-size: 0.95em; border-radius: 4px; font-family: inherit;}
     </style>
     <div class="crea-success-banner">
         <strong>Actualización Exitosa:</strong> El registro fue corregido y guardado de forma segura en la base de datos.
@@ -30,30 +21,61 @@ include plugin_dir_path( __FILE__ ) . 'view-table.php';
 ?>
 
 <style>
+    /* ☀️ 1. COLUMNA DE ACCIONES FIJA (Sticky Left) */
+    .crea-frontend-table th:first-child {
+        position: sticky;
+        left: 0;
+        z-index: 20 !important; /* Para que quede encima del header general que baja al scrollear */
+        box-shadow: 2px 0 5px rgba(0,0,0,0.05); /* Sombra sutil para separarla visualmente del resto de celdas */
+    }
+    .crea-frontend-table td:first-child {
+        position: sticky;
+        left: 0;
+        z-index: 5;
+        box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+    }
+    /* Sincronizar colores de fondo para que la celda fija no se vuelva transparente al hacer scroll */
+    .crea-frontend-table tbody tr:nth-child(odd) td:first-child {
+        background-color: var(--crea-front-tr-odd-bg);
+    }
+    .crea-frontend-table tbody tr:nth-child(even) td:first-child {
+        background-color: var(--crea-front-tr-even-bg);
+    }
+
+
+    /* ☀️ 2. MODAL Y MOTOR DE SCROLL CORREGIDO */
     .crea-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.7); z-index: 999999; display: none; align-items: center; justify-content: center; backdrop-filter: blur(2px); font-family: inherit; }
-    .crea-modal-box { background: #fff; width: 90%; max-width: 800px; max-height: 90vh; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); display: flex; flex-direction: column; overflow: hidden; }
-    .crea-modal-header { padding: 20px 25px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
-    .crea-modal-header h3 { margin: 0; font-size: 1.3em; color: #0f172a; }
-    .crea-btn-close { background: transparent; border: none; font-size: 24px; cursor: pointer; color: #64748b; line-height: 1; padding: 0; outline: none; transition: color 0.2s; }
-    .crea-btn-close:hover { color: #e11d48; }
     
+    /* El contenedor maestro del modal */
+    .crea-modal-box { background: #fff; width: 90%; max-width: 800px; max-height: 90vh; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); display: flex; flex-direction: column; overflow: hidden; }
+    
+    /* Formulario hereda el flexbox para permitir el scroll interno */
+    .crea-modal-box form { display: flex; flex-direction: column; flex: 1; overflow: hidden; margin: 0; }
+    
+    /* El cuerpo ahora ocupará el espacio sobrante y activará la barra de desplazamiento */
     .crea-modal-body { padding: 25px; overflow-y: auto; flex: 1; }
+
+
+    /* Estilos del Header y Footer del Modal */
+    .crea-modal-header { padding: 20px 25px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: transparent; }
+    .crea-modal-header h3 { margin: 0; font-size: 1.3em; }
+    .crea-btn-close { background: transparent; border: none; font-size: 24px; cursor: pointer; color: inherit; line-height: 1; padding: 0; outline: none; opacity: 0.5; }
+    .crea-btn-close:hover { opacity: 1; color: #e11d48; }
     
     .crea-form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px 25px; }
     .crea-col-span-full { grid-column: 1 / -1; }
     .crea-field-group { display: flex; flex-direction: column; }
-    .crea-main-label { font-weight: 600; margin-bottom: 6px; font-size: 0.95em; display: flex; align-items: center; color: #334155; }
+    .crea-main-label { font-weight: 600; margin-bottom: 6px; font-size: 0.95em; display: flex; align-items: center; opacity: 0.9; }
     .crea-req-mark { color: #e11d48; margin-left: 4px; font-weight: bold; }
     
     .crea-field-group input[type="text"], .crea-field-group input[type="number"], .crea-field-group input[type="date"],
     .crea-field-group input[type="time"], .crea-field-group select, .crea-field-group textarea { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 4px; outline: none; transition: border-color 0.2s; font-family: inherit; font-size: 1em; box-sizing: border-box; }
     .crea-field-group input:focus, .crea-field-group select:focus, .crea-field-group textarea:focus { border-color: var(--crea-front-primary); }
-    
     .crea-cat-group { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
-    .crea-cat-group label { font-weight: normal; font-size: 0.95em; display: flex; align-items: center; gap: 8px; cursor: pointer; color: #334155; }
+    .crea-cat-group label { font-weight: normal; font-size: 0.95em; display: flex; align-items: center; gap: 8px; cursor: pointer; opacity: 0.9; }
     .crea-cat-group input { margin: 0 !important; cursor: pointer; }
 
-    .crea-modal-footer { padding: 20px 25px; border-top: 1px solid #e2e8f0; background: #f8fafc; text-align: right; }
+    .crea-modal-footer { padding: 20px 25px; border-top: 1px solid #e2e8f0; background: transparent; text-align: right; }
     .crea-btn-save { background: var(--crea-front-primary); color: #fff; border: none; padding: 10px 24px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 1em; transition: opacity 0.2s; }
     .crea-btn-save:hover { opacity: 0.85; }
     
