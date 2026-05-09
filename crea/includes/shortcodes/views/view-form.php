@@ -1,7 +1,7 @@
 <?php
 /**
  * Archivo: wp-content/plugins/crea/includes/shortcodes/views/view-form.php
- * Descripción: Interfaz de captura homologada, limpia, con Jodit Editor y validaciones exactas.
+ * Descripción: Interfaz de captura de registros.
  */
 if ( ! defined( 'WPINC' ) ) { die; }
 
@@ -23,7 +23,7 @@ $front_colors = wp_parse_args( get_option( 'crea_front_colors', [] ), $default_f
         --crea-front-primary: <?php echo esc_attr($front_colors['primary']); ?>;
     }
 
-    /* ☀️ ESTRUCTURA Y TARJETA */
+    /* Estructura del contenedor principal */
     .crea-frontend-wrapper {
         background: transparent;
         border: 1px solid #e2e8f0;
@@ -33,13 +33,13 @@ $front_colors = wp_parse_args( get_option( 'crea_front_colors', [] ), $default_f
         position: relative;
     }
 
-    /* API NATIVA FULLSCREEN */
+    /* Implementación de API Fullscreen */
     .crea-frontend-wrapper:fullscreen {
         background: #fff; width: 100vw; height: 100vh; padding: 40px; overflow-y: auto; display: flex; flex-direction: column; border: none; border-radius: 0;
     }
     .crea-frontend-wrapper:-webkit-full-screen { background: #fff; padding: 40px; overflow-y: auto; display: flex; flex-direction: column; border: none; border-radius: 0; }
 
-    /* CABECERA */
+    /* Cabecera de la interfaz */
     .crea-frontend-header {
         padding: 20px 25px;
         border-bottom: 1px solid #e2e8f0;
@@ -57,21 +57,18 @@ $front_colors = wp_parse_args( get_option( 'crea_front_colors', [] ), $default_f
     }
     .crea-btn-fs:hover { color: var(--crea-front-primary); background: #f1f5f9; }
 
-    /* BANNER ÉXITO */
+    /* Notificaciones de sistema */
     .crea-success-banner {
         background-color: #dcfce7; border-left: 4px solid #22c55e; color: #166534; padding: 15px 20px; margin: 25px 25px 0 25px; border-radius: 4px; font-size: 0.95em;
     }
 
-    /* CUERPO DEL FORMULARIO */
+    /* Disposición de campos del formulario */
     .crea-form-body { padding: 25px; flex: 1; }
     .crea-form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; }
     .crea-col-full { grid-column: 1 / -1; }
     
     .crea-field-group { display: flex; flex-direction: column; }
-    
-    .crea-label { 
-        display: block; font-weight: 600; margin-bottom: 8px; opacity: 0.9; cursor: pointer;
-    }
+    .crea-label { display: block; font-weight: 600; margin-bottom: 8px; opacity: 0.9; cursor: pointer; }
     .crea-req { color: #e11d48; margin-left: 4px; font-weight: bold; }
     
     .crea-field-group input[type="text"], .crea-field-group input[type="number"], 
@@ -82,50 +79,39 @@ $front_colors = wp_parse_args( get_option( 'crea_front_colors', [] ), $default_f
     }
     .crea-field-group input:focus, .crea-field-group select:focus, .crea-field-group textarea:focus { border-color: var(--crea-front-primary); }
 
-    /* CHECKBOXES Y RADIOS CLÁSICOS */
+    /* Componentes de selección tradicionales */
     .crea-radio-group, .crea-checkbox-group { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
     .crea-option-label { display: flex; align-items: center; gap: 8px; font-weight: normal; margin: 0; cursor: pointer; opacity: 0.9; }
-    .crea-option-label input { margin: 0; cursor: pointer; width: auto !important; }
+    #crea-form-wrapper-<?php echo $base_id; ?> .crea-option-label input { margin: 0; cursor: pointer; width: auto; }
 
-    /* SELECT2 ADAPTADO */
-    .crea-field-group .select2-container .select2-selection--single,
-    .crea-field-group .select2-container .select2-selection--multiple {
-        min-height: 40px !important; border-color: #cbd5e1 !important; border-radius: 4px; background: #fff; display: flex; align-items: center;
+    /* Normalización de Select2 mediante especificidad de ID */
+    #crea-form-wrapper-<?php echo $base_id; ?> .crea-field-group .select2-container .select2-selection--single,
+    #crea-form-wrapper-<?php echo $base_id; ?> .crea-field-group .select2-container .select2-selection--multiple {
+        min-height: 40px; border-color: #cbd5e1; border-radius: 4px; background: #fff; display: flex; align-items: center;
     }
-    .crea-field-group .select2-container--default .select2-selection--single .select2-selection__rendered {
-        line-height: normal !important; padding-left: 12px;
+    #crea-form-wrapper-<?php echo $base_id; ?> .crea-field-group .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: normal; padding-left: 12px;
     }
-    .crea-field-group .select2-container--default .select2-selection--single .select2-selection__arrow { height: 38px !important; }
+    #crea-form-wrapper-<?php echo $base_id; ?> .crea-field-group .select2-container--default .select2-selection--single .select2-selection__arrow { height: 38px; }
 
-    /* ☀️ BLINDAJE JODIT HTML EDITOR */
-    .jodit-container { border: 1px solid #cbd5e1 !important; border-radius: 4px !important; font-family: inherit !important; }
-    .jodit-toolbar__box { background: #f8fafc !important; border-bottom: 1px solid #e2e8f0 !important; }
+    /* Estilos del editor Jodit mediante especificidad de ID */
+    #crea-form-wrapper-<?php echo $base_id; ?> .jodit-container { border: 1px solid #cbd5e1; border-radius: 4px; font-family: inherit; }
+    #crea-form-wrapper-<?php echo $base_id; ?> .jodit-container .jodit-toolbar__box { background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
     
-    /* Forzar botones blancos/transparentes y evitar azules del tema */
-    .jodit-toolbar-button__button {
-        background-color: transparent !important;
-        color: #334155 !important;
-        border: none !important;
-        box-shadow: none !important;
-        border-radius: 4px !important;
-        min-height: 32px !important;
+    #crea-form-wrapper-<?php echo $base_id; ?> .jodit-container .jodit-toolbar-button__button {
+        background-color: transparent; color: #334155; border: none; box-shadow: none; border-radius: 4px; min-height: 32px;
     }
-    .jodit-toolbar-button__button:hover { background-color: #e2e8f0 !important; }
+    #crea-form-wrapper-<?php echo $base_id; ?> .jodit-container .jodit-toolbar-button__button:hover { background-color: #e2e8f0; }
     
-    /* Reparar el ícono roto de Fullscreen y otros SVGs */
-    .jodit-icon {
-        display: inline-block !important;
-        width: 14px !important;
-        height: 14px !important;
-        fill: #334155 !important;
+    #crea-form-wrapper-<?php echo $base_id; ?> .jodit-container .jodit-icon {
+        display: inline-block; width: 14px; height: 14px; fill: #334155;
     }
     
-    /* Ocultar "Powered by Jodit" en el pie del editor */
-    .jodit-status-bar-link { display: none !important; }
-    .jodit-workplace { background: #fff !important; }
-    .jodit-wysiwyg { padding: 15px !important; font-size: 15px !important; line-height: 1.6 !important; }
+    #crea-form-wrapper-<?php echo $base_id; ?> .jodit-container .jodit-status-bar-link { display: none; }
+    #crea-form-wrapper-<?php echo $base_id; ?> .jodit-container .jodit-workplace { background: #fff; }
+    #crea-form-wrapper-<?php echo $base_id; ?> .jodit-container .jodit-wysiwyg { padding: 15px; font-size: 15px; line-height: 1.6; }
 
-    /* FOOTER Y BOTÓN */
+    /* Pie de formulario y acciones de guardado */
     .crea-form-footer { padding: 20px 25px; border-top: 1px solid #e2e8f0; background: transparent; text-align: right; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; }
     .crea-btn-save { background: var(--crea-front-primary); color: #fff; border: none; padding: 10px 24px; border-radius: 4px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; display: inline-flex; align-items: center; gap: 8px; }
     .crea-btn-save:hover { opacity: 0.9; }
@@ -149,7 +135,7 @@ $front_colors = wp_parse_args( get_option( 'crea_front_colors', [] ), $default_f
 
     <?php if ( isset($_GET['crea_msg']) && $_GET['crea_msg'] === 'success' ) : ?>
         <div class="crea-success-banner">
-            <strong>¡Éxito!</strong> El registro ha sido guardado y almacenado correctamente en la matriz.
+            <strong>Registro almacenado:</strong> La información se ha guardado correctamente en la base de datos.
         </div>
     <?php endif; ?>
 
@@ -290,7 +276,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnFs = document.getElementById('btn-fs-<?php echo $base_id; ?>');
     const form = document.getElementById('crea-form-<?php echo $base_id; ?>');
 
-    // --- 1. PANTALLA COMPLETA NATIVA ---
+    // Inicialización de modo pantalla completa nativo
     if (btnFs) {
         btnFs.addEventListener('click', () => {
             if (!document.fullscreenElement && !document.webkitFullscreenElement) {
@@ -303,12 +289,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // --- 2. SELECTORES ---
+    // Inicialización de componentes Select2
     if (typeof jQuery !== 'undefined') {
         jQuery('.crea-search-select').select2({ width: '100%', allowClear: true });
     }
 
-    // --- 3. JODIT HTML EDITOR (Profesional y Blindado) ---
+    // Configuración e instanciación de editores Jodit
     if (typeof Jodit !== 'undefined') {
         const editors = document.querySelectorAll('.crea-jodit-editor');
         editors.forEach(textarea => {
@@ -316,7 +302,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 language: 'es',
                 height: 350,
                 toolbarAdaptive: false,
-                removeButtons: ['about'], // Oculta marca de agua
+                removeButtons: ['about'],
                 buttons: [
                     'source', '|',
                     'undo', 'redo', '|',
@@ -345,7 +331,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // --- 4. ALERTAS DE VALIDACIÓN PRECISAS ---
+    // Lógica de validación de integridad de datos en cliente
     const inputsToValidate = form.querySelectorAll('input[data-type]');
     
     inputsToValidate.forEach(input => {
@@ -360,7 +346,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (type === 'discrete') {
                 const maxD = parseInt(this.getAttribute('data-max-digits'));
                 if (val.includes('.') || val.includes(',')) {
-                    this.setCustomValidity(`Este campo solo admite números enteros (sin punto decimal).`);
+                    this.setCustomValidity(`Este campo solo admite números enteros.`);
                 } else if (val.replace('-', '').length > maxD) {
                     this.setCustomValidity(`La parte entera tiene ${val.replace('-', '').length} dígitos. El máximo permitido es de ${maxD}.`);
                 }
