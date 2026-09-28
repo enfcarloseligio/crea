@@ -1,12 +1,12 @@
 <?php
 /**
  * Archivo: wp-content/plugins/crea/includes/shortcodes/views/view-table-editor.php
- * Descripción: Interfaz DRY que reutiliza la tabla maestra y añade el modal de edición.
+ * Descripción: Interfaz para la edición y actualización de registros en la matriz de datos.
  */
 if ( ! defined( 'WPINC' ) ) { die; }
 ?>
 
-<?php if ( isset($_GET['crea_msg']) && $_GET['crea_msg'] === 'edit_success' ) : ?>
+<?php if ( isset($_GET['crea_msg']) &&$_GET['crea_msg'] === 'edit_success' ) : ?>
     <style>
         .crea-success-banner { 
             background-color: #dcfce7; 
@@ -30,14 +30,61 @@ include plugin_dir_path( __FILE__ ) . 'view-table.php';
 ?>
 
 <style>
+    /* Superposición y contenedor maestro del modal de edición */
     .crea-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.7); z-index: 999999; display: none; align-items: center; justify-content: center; backdrop-filter: blur(2px); font-family: inherit; }
-    .crea-modal-box { background: #fff; width: 90%; max-width: 800px; max-height: 90vh; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); display: flex; flex-direction: column; overflow: hidden; }
-    .crea-modal-header { padding: 20px 25px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
-    .crea-modal-header h3 { margin: 0; font-size: 1.3em; color: #0f172a; }
-    .crea-btn-close { background: transparent; border: none; font-size: 24px; cursor: pointer; color: #64748b; line-height: 1; padding: 0; outline: none; transition: color 0.2s; }
-    .crea-btn-close:hover { color: #e11d48; }
     
-    .crea-modal-body { padding: 25px; overflow-y: auto; flex: 1; }
+    /* ☀️ Delimitación estructural del modal con contención de alto y flexbox estricto */
+    .crea-modal-box { 
+        background: #fff; 
+        width: 90%; 
+        max-width: 800px; 
+        height: 85vh;
+        max-height: 85vh; 
+        border-radius: 8px; 
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
+        display: flex; 
+        flex-direction: column; 
+        overflow: hidden; 
+    }
+    
+    /* ☀️ Encapsulación flexbox en formulario para propagar cálculo de desbordamiento */
+    .crea-modal-box form {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+        margin: 0;
+        overflow: hidden;
+    }
+
+    .crea-modal-header { padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; flex-shrink: 0; }
+    .crea-modal-header h3 { margin: 0; font-size: 1.2em; color: #0f172a; }
+    
+    /* ☀️ Botón de cierre vectorial con dimensiones explícitas y centrado simétrico */
+    .crea-btn-close { 
+        background: transparent; 
+        border: none; 
+        cursor: pointer; 
+        color: #64748b; 
+        width: 32px; 
+        height: 32px; 
+        border-radius: 4px; 
+        padding: 0; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        transition: background-color 0.2s, color 0.2s; 
+    }
+    .crea-btn-close:hover { color: #e11d48; background-color: #f1f5f9; }
+    .crea-btn-close svg { width: 18px; height: 18px; }
+    
+    /* ☀️ Activación de desplazamiento vertical en el cuerpo del formulario */
+    .crea-modal-body { 
+        padding: 25px; 
+        overflow-y: auto; 
+        flex: 1; 
+        min-height: 0; 
+    }
     
     .crea-form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px 25px; }
     .crea-col-span-full { grid-column: 1 / -1; }
@@ -51,9 +98,11 @@ include plugin_dir_path( __FILE__ ) . 'view-table.php';
     
     .crea-cat-group { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
     .crea-cat-group label { font-weight: normal; font-size: 0.95em; display: flex; align-items: center; gap: 8px; cursor: pointer; color: #334155; }
-    .crea-cat-group input { margin: 0 !important; cursor: pointer; }
+    
+    /* ☀️ Normalización sin !important gobernada por jerarquía DOM del ID maestro */
+    #crea-modal-form-<?php echo $base_id; ?> .crea-cat-group input { margin: 0; cursor: pointer; }
 
-    .crea-modal-footer { padding: 20px 25px; border-top: 1px solid #e2e8f0; background: #f8fafc; text-align: right; }
+    .crea-modal-footer { padding: 16px 25px; border-top: 1px solid #e2e8f0; background: #f8fafc; text-align: right; flex-shrink: 0; }
     .crea-btn-save { background: var(--crea-front-primary); color: #fff; border: none; padding: 10px 24px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 1em; transition: opacity 0.2s; }
     .crea-btn-save:hover { opacity: 0.85; }
     
@@ -65,7 +114,13 @@ include plugin_dir_path( __FILE__ ) . 'view-table.php';
     <div class="crea-modal-box">
         <div class="crea-modal-header">
             <h3>Corrección de Datos - Folio #<span id="crea-display-folio"></span></h3>
-            <button type="button" class="crea-btn-close">&times;</button>
+            <!-- ☀️ Botón de cierre vectorial simétrico -->
+            <button type="button" class="crea-btn-close" aria-label="Cerrar modal">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
         </div>
         
         <form action="" method="POST" id="crea-form-edit-<?php echo esc_attr($form['form_slug']); ?>">
@@ -77,18 +132,16 @@ include plugin_dir_path( __FILE__ ) . 'view-table.php';
             <div class="crea-modal-body">
                 <div class="crea-form-grid">
                     <?php 
-                    foreach ( $fields as $field ) : 
+                    foreach ( $fields as$field ) : 
                         $config = json_decode($field['config'], true) ?: [];
-                        $is_req = $field['is_required'] ? 'required' : '';
-                        $req_mark = $field['is_required'] ? '<span class="crea-req-mark" title="Obligatorio">*</span>' : '';
-                        $name_attr = 'crea_data[' . esc_attr($field['field_slug']) . ']';
-                        
-                        $wrapper_class = 'crea-field-group';
-                        if ( in_array($field['field_type'], ['text_long', 'text_html']) ) $wrapper_class .= ' crea-col-span-full';
+                        $is_req =$field['is_required'] ? 'required' : '';
+                        $req_mark =$field['is_required'] ? '<span class="crea-req-mark" title="Obligatorio">*</span>' : '';
+                        $name_attr = 'crea_data[' . esc_attr($field['field_slug']) . ']';$wrapper_class = 'crea-field-group';
+                        if ( in_array($field['field_type'], ['text_long', 'text_html']) )$wrapper_class .= ' crea-col-span-full';
                     ?>
                     <div class="<?php echo $wrapper_class; ?>">
                         <label class="crea-main-label" for="edit_<?php echo esc_attr($field['field_slug']); ?>">
-                            <?php echo esc_html($field['field_name']) . $req_mark; ?>
+                            <?php echo esc_html($field['field_name']) .$req_mark; ?>
                         </label>
                         <?php 
                         switch ( $field['field_type'] ) {
@@ -112,7 +165,7 @@ include plugin_dir_path( __FILE__ ) . 'view-table.php';
                                 break;
                             case 'text_long':
                             case 'text_html':
-                                $rows = $field['field_type'] === 'text_html' ? '8' : '4';
+                                $rows =$field['field_type'] === 'text_html' ? '8' : '4';
                                 echo '<textarea name="'.$name_attr.'" id="edit_'.esc_attr($field['field_slug']).'" rows="'.$rows.'" '.$is_req.'></textarea>';
                                 break;
                             case 'select':
@@ -120,7 +173,7 @@ include plugin_dir_path( __FILE__ ) . 'view-table.php';
                                 $options = isset($config['options']) ? explode("\n", $config['options']) : [];
                                 echo '<select name="'.$name_attr.'" id="edit_'.esc_attr($field['field_slug']).'" '.$is_req.'>';
                                 echo '<option value="">-- Seleccionar --</option>';
-                                foreach($options as $opt) {
+                                foreach($options as$opt) {
                                     $opt = trim($opt);
                                     if(!empty($opt)) echo '<option value="'.esc_attr($opt).'">'.esc_html($opt).'</option>';
                                 }
@@ -129,10 +182,10 @@ include plugin_dir_path( __FILE__ ) . 'view-table.php';
                             case 'radio':
                                 $options = isset($config['options']) ? explode("\n", $config['options']) : [];
                                 echo '<div class="crea-cat-group">';
-                                foreach($options as $index => $opt) {
+                                foreach($options as $index =>$opt) {
                                     $opt = trim($opt);
                                     if(empty($opt)) continue;
-                                    $radio_id = 'edit_' . esc_attr($field['field_slug']) . '_' . $index;
+                                    $radio_id = 'edit_' . esc_attr($field['field_slug']) . '_' .$index;
                                     echo '<label for="'.$radio_id.'"><input type="radio" name="'.$name_attr.'" id="'.$radio_id.'" value="'.esc_attr($opt).'" '.$is_req.'> '.esc_html($opt).'</label>';
                                 }
                                 echo '</div>';
@@ -140,10 +193,10 @@ include plugin_dir_path( __FILE__ ) . 'view-table.php';
                             case 'checkbox':
                                 $options = isset($config['options']) ? explode("\n", $config['options']) : [];
                                 echo '<div class="crea-cat-group">';
-                                foreach($options as $index => $opt) {
+                                foreach($options as $index =>$opt) {
                                     $opt = trim($opt);
                                     if(empty($opt)) continue;
-                                    $chk_id = 'edit_' . esc_attr($field['field_slug']) . '_' . $index;
+                                    $chk_id = 'edit_' . esc_attr($field['field_slug']) . '_' .$index;
                                     echo '<label for="'.$chk_id.'"><input type="checkbox" name="'.$name_attr.'[]" id="'.$chk_id.'" value="'.esc_attr($opt).'"> '.esc_html($opt).'</label>';
                                 }
                                 echo '</div>';
@@ -173,34 +226,29 @@ document.addEventListener('DOMContentLoaded', function() {
     const displayFolio = document.getElementById('crea-display-folio');
     const inputRecordId = document.getElementById('crea-input-record-id');
 
-    // Motor Inteligente de Auto-Llenado (Parsea el JSON de la fila)
+    // Motor de asignación de valores para edición
     function openEditModal(recordId, rowData) {
         displayFolio.textContent = recordId;
         inputRecordId.value = recordId;
         
         for (const [key, value] of Object.entries(rowData)) {
-            // Buscar los inputs correspondientes a esta variable SQL
             const inputs = formEdit.querySelectorAll(`[name="crea_data[${key}]"], [name="crea_data[${key}][]"]`);
             if (inputs.length === 0) continue;
 
             const type = inputs[0].type;
             
             if (type === 'radio' || type === 'checkbox') {
-                // Rellenar selecciones múltiples y simples
                 const arrValues = value ? String(value).split(',').map(s => s.trim()) : [];
                 inputs.forEach(inp => { inp.checked = arrValues.includes(inp.value); });
             } else {
-                // Rellenar inputs de texto, números, fechas y selects
                 inputs[0].value = value;
             }
         }
         
-        // Mostrar el modal y bloquear scroll de la página de fondo
         modal.style.display = 'flex';
         document.body.style.overflow = 'hidden'; 
     }
 
-    // Funciones para cerrar modal
     btnClose.addEventListener('click', () => { 
         modal.style.display = 'none'; 
         document.body.style.overflow = 'auto'; 
@@ -213,7 +261,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Delegación dinámica: Intercepta el clic en el botón "Editar" sin importar paginación o filtros
     tableWrapper.addEventListener('click', function(e) {
         const btn = e.target.closest('.crea-btn-edit');
         if (btn) {

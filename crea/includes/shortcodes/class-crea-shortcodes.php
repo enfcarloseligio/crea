@@ -29,7 +29,7 @@ class CREA_Shortcodes {
         if ( !empty($base_ids) ) {
             foreach ( $base_ids as $id ) {
                 add_shortcode( "crea_table_a_{$id}", array( $this, 'render_placeholder' ) );
-                add_shortcode( "crea_table_er_{$id}", array( $this, 'render_table_editor' ) ); // Enlazado al perfil Editor
+                add_shortcode( "crea_table_er_{$id}", array( $this, 'render_table_editor' ) );
                 add_shortcode( "crea_table_ar_{$id}", array( $this, 'render_form_add' ) ); 
                 add_shortcode( "crea_table_vr_{$id}", array( $this, 'render_table_view' ) );
             }
@@ -40,8 +40,7 @@ class CREA_Shortcodes {
      * Procesa los datos del formulario, calcula identificadores estadísticos y guarda el registro.
      */
     public function process_form_submission() {
-        // Intercepta tanto Creación como Edición
-        if ( isset($_POST['crea_action']) && in_array($_POST['crea_action'], ['save_new_record', 'edit_existing_record']) ) {
+        if ( isset($_POST['crea_action']) && in_array($_POST['crea_action'], array('save_new_record', 'edit_existing_record')) ) {
             $base_id = intval($_POST['base_id']);
             $is_edit = ($_POST['crea_action'] === 'edit_existing_record');
             $record_id = $is_edit ? intval($_POST['record_id']) : 0;
@@ -70,9 +69,11 @@ class CREA_Shortcodes {
                 $slug = $field['field_slug'];
                 $val = isset($crea_data[$slug]) ? $crea_data[$slug] : '';
                 
-                // Normalización de datos en formato array (múltiples selecciones)
                 if ( is_array($val) ) {
                     $val = implode(', ', array_map('sanitize_text_field', $val));
+                } elseif ( $field['field_type'] === 'text_html' ) {
+                    // Sanitización controlada para preservar estilos inline e incrustaciones
+                    $val = $this->sanitize_rich_html($val);
                 } else {
                     $val = sanitize_textarea_field($val);
                 }
@@ -82,7 +83,7 @@ class CREA_Shortcodes {
                 // Procesamiento de codificación estadística para variables categóricas
                 $config = json_decode($field['config'], true) ?: array();
                 
-                if ( in_array($field['field_type'], ['select', 'radio', 'checkbox']) && isset($config['id_type']) && in_array($config['id_type'], ['auto', 'manual']) ) {
+                if ( in_array($field['field_type'], array('select', 'radio', 'checkbox')) && isset($config['id_type']) && in_array($config['id_type'], array('auto', 'manual')) ) {
                     
                     $options_array = isset($config['options']) ? array_map('trim', explode("\n", $config['options'])) : array();
                     
@@ -138,6 +139,87 @@ class CREA_Shortcodes {
     }
 
     /**
+     * Sanitiza código HTML preservando atributos de diseño, colores inline y elementos de video.
+     */
+    private function sanitize_rich_html( $html ) {
+        // ☀️ Eliminación de etiquetas peligrosas antes del procesamiento
+        $html = preg_replace( '/<script\b[^>]*>(.*?)<\/script>/is', '', $html );
+        $html = preg_replace( '/on[a-z]+\s*=\s*(["\']).*?\1/is', '', $html );
+        $html = preg_replace( '/javascript\s*:/is', '', $html );
+
+        // ☀️ Preservación de atributos de estilo mediante codificación temporal controlada
+        $html = preg_replace_callback( '/\bstyle=(["\'])(.*?)\1/is', function( $matches ) {
+            $cleaned_style = preg_replace( '/[<>\(\)\;]/', '', $matches[2] );
+            // Se restaura el formato rgb/rgba de forma segura
+            $safe_style = preg_replace_callback( '/rgb\s*\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)/i', function($m) {
+                return sprintf( 'rgb(%d,%d,%d)', min(255, $m[1]), min(255, $m[2]), min(255, $m[3]) );
+            }, $matches[2] );
+            return 'style="' . esc_attr( $safe_style ) . '"';
+        }, $html );
+
+        $allowed = wp_kses_allowed_html( 'post' );
+
+        $common_attributes = array(
+            'style' => true,
+            'class' => true,
+            'id'    => true,
+            'title' => true,
+        );
+
+        $extended_tags = array(
+            'span', 'p', 'div', 'mark', 'font', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 
+            'strong', 'b', 'em', 'i', 'u', 's', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 
+            'ul', 'ol', 'li', 'blockquote', 'code', 'pre', 'br'
+        );
+
+        foreach ( $extended_tags as $tag ) {
+            if ( ! isset( $allowed[$tag] ) ) {
+                $allowed[$tag] = array();
+            }
+            $allowed[$tag] = array_merge( $allowed[$tag], $common_attributes );
+        }
+
+        $allowed['iframe'] = array(
+            'src'             => true,
+            'width'           => true,
+            'height'          => true,
+            'frameborder'     => true,
+            'allow'           => true,
+            'allowfullscreen' => true,
+            'loading'         => true,
+            'title'           => true,
+            'style'           => true,
+            'class'           => true,
+            'id'              => true,
+        );
+
+        $allowed['video'] = array(
+            'src'      => true,
+            'width'    => true,
+            'height'   => true,
+            'controls' => true,
+            'autoplay' => true,
+            'muted'    => true,
+            'loop'     => true,
+            'poster'   => true,
+            'style'    => true,
+            'class'    => true,
+        );
+
+        $allowed['source'] = array(
+            'src'  => true,
+            'type' => true,
+        );
+
+        // ☀️ Desactivación de safecss durante la ejecución de wp_kses para conservar declaraciones de color
+        add_filter( 'safecss_filter_attr_allow_css', '__return_true' );
+        $clean_html = wp_kses( $html, $allowed );
+        remove_filter( 'safecss_filter_attr_allow_css', '__return_true' );
+
+        return $clean_html;
+    }
+
+    /**
      * Renderiza un contenedor temporal para módulos en desarrollo.
      */
     public function render_placeholder($atts, $content = null, $tag = '') {
@@ -181,7 +263,6 @@ class CREA_Shortcodes {
      * Renderiza la tabla de visualización de datos (Perfil Analista).
      */
     public function render_table_view( $atts, $content = null, $tag = '' ) {
-        // Extrae el ID del shortcode (Ej. crea_table_vr_16 -> 16)
         $base_id = intval( str_replace( 'crea_table_vr_', '', $tag ) );
 
         if ( $base_id <= 0 ) {
@@ -199,18 +280,15 @@ class CREA_Shortcodes {
 
         $physical_table = $wpdb->prefix . "crea_data_" . $form['form_slug'];
 
-        // Validación de integridad de tabla física
         if ($wpdb->get_var("SHOW TABLES LIKE '$physical_table'") !== $physical_table) {
             return '<p style="color:var(--crea-danger);">Error: Estructura física de datos no localizada en el servidor.</p>';
         }
 
-        // Obtener la estructura de columnas (excluyendo IDs de sistema para visualización limpia)
         $fields = $wpdb->get_results( $wpdb->prepare( 
             "SELECT * FROM $table_fields WHERE form_id = %d AND is_system = 0 ORDER BY field_order ASC, id ASC", 
             $base_id 
         ), ARRAY_A );
 
-        // Obtener registros ordenados por creación reciente
         $records = $wpdb->get_results( "SELECT * FROM $physical_table ORDER BY created_at DESC", ARRAY_A );
 
         ob_start();

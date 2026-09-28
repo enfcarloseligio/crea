@@ -1,7 +1,7 @@
 <?php
 /**
  * Archivo: wp-content/plugins/crea/includes/shortcodes/views/view-table.php
- * Descripción: Interfaz gráfica moderna y dinámica para la matriz de datos.
+ * Descripción: Interfaz principal para la visualización, filtrado y exportación de la matriz de datos.
  */
 if ( ! defined( 'WPINC' ) ) { die; }
 
@@ -17,7 +17,7 @@ $front_colors = wp_parse_args( get_option( 'crea_front_colors', [] ), $default_f
 $is_editor_mode = isset($is_editor_mode) ? $is_editor_mode : false;
 $is_logged_in = is_user_logged_in();
 
-// Extraer Capturistas Únicos y Filtros Dinámicos
+// Extracción de identificadores únicos para listados de filtrado
 $capturistas = [];
 if ( $is_logged_in ) {
     foreach ( $records as $r ) {
@@ -47,6 +47,7 @@ foreach ( $fields as $f ) {
 <style id="crea-dynamic-styles-<?php echo $base_id; ?>"></style>
 
 <style>
+    /* Asignación de variables CSS al entorno delimitado */
     #crea-visor-<?php echo $base_id; ?> {
         --crea-front-primary: <?php echo esc_attr($front_colors['primary']); ?>;
         --crea-front-th-bg: <?php echo esc_attr($front_colors['th_bg']); ?>;
@@ -57,144 +58,192 @@ foreach ( $fields as $f ) {
         --crea-front-tr-even-text: <?php echo esc_attr($front_colors['even_text']); ?>;
     }
 
-    .crea-table-wrapper { background: transparent; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); margin-bottom: 30px; overflow: visible; position: relative;}
-    
-    /* ☀️ ESTILOS PARA API NATIVA DE PANTALLA COMPLETA */
-    .crea-table-wrapper:fullscreen {
-        background: #fff; /* Fondo blanco garantizado */
-        width: 100vw;
-        height: 100vh;
-        margin: 0;
-        padding: 0;
-        border: none;
-        border-radius: 0;
-        display: flex;
-        flex-direction: column;
-        overflow-y: auto; /* Permite scroll general si el contenido excede */
+    #crea-visor-<?php echo $base_id; ?>.crea-table-wrapper { 
+        background: transparent; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); margin-bottom: 30px; position: relative; 
     }
-    .crea-table-wrapper:fullscreen .crea-table-responsive {
-        flex: 1;
-        max-height: none !important; /* Elimina límite de altura para llenar pantalla */
+    
+    /* Configuración estructural de API Fullscreen */
+    #crea-visor-<?php echo $base_id; ?>.crea-table-wrapper:fullscreen { 
+        background: #fff; width: 100vw; height: 100vh; margin: 0; padding: 40px; border: none; border-radius: 0; display: flex; flex-direction: column; overflow-y: auto; 
     }
-    /* Soporte para webkit */
-    .crea-table-wrapper:-webkit-full-screen { background: #fff; display: flex; flex-direction: column; overflow-y: auto; }
-    .crea-table-wrapper:-webkit-full-screen .crea-table-responsive { flex: 1; max-height: none !important; }
+    #crea-visor-<?php echo $base_id; ?>.crea-table-wrapper:fullscreen .crea-table-responsive { flex: 1; max-height: none; }
+    #crea-visor-<?php echo $base_id; ?>.crea-table-wrapper:-webkit-full-screen { 
+        background: #fff; padding: 40px; display: flex; flex-direction: column; overflow-y: auto; border: none; border-radius: 0;
+    }
+    #crea-visor-<?php echo $base_id; ?>.crea-table-wrapper:-webkit-full-screen .crea-table-responsive { flex: 1; max-height: none; }
 
-    .crea-table-header { padding: 20px 25px; border-bottom: 1px solid #e2e8f0; background: transparent; display: flex; justify-content: space-between; align-items: flex-end;}
-    .crea-table-header h2 { margin: 0 0 5px 0; }
-    .crea-table-header p { margin: 0; opacity: 0.8; }
+    #crea-visor-<?php echo $base_id; ?> .crea-table-header { padding: 20px 25px; border-bottom: 1px solid #e2e8f0; background: transparent; display: flex; justify-content: space-between; align-items: flex-end;}
+    #crea-visor-<?php echo $base_id; ?> .crea-table-header h2 { margin: 0 0 5px 0; }
+    #crea-visor-<?php echo $base_id; ?> .crea-table-header p { margin: 0; opacity: 0.8; }
 
-    /* FILTROS AVANZADOS Y ACCIONES HEADER */
-    .crea-header-actions { display: flex; gap: 10px; align-items: center; }
-    .crea-btn-fullscreen { background: transparent; border: none; cursor: pointer; color: #64748b; padding: 5px; transition: color 0.2s; display: flex; align-items: center; justify-content: center; }
-    .crea-btn-fullscreen:hover { color: var(--crea-front-primary); }
+    #crea-visor-<?php echo $base_id; ?> .crea-header-actions { display: flex; gap: 10px; align-items: center; }
+    #crea-visor-<?php echo $base_id; ?> .crea-btn-fullscreen { background: transparent; border: none; cursor: pointer; color: #64748b; padding: 5px; transition: color 0.2s; display: flex; align-items: center; justify-content: center; }
+    #crea-visor-<?php echo $base_id; ?> .crea-btn-fullscreen:hover { color: var(--crea-front-primary); }
 
-    .crea-btn-toggle-filters { background: transparent; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 13px; transition: all 0.2s; display: flex; align-items: center; gap: 5px; color: inherit; height: 32px; box-sizing: border-box; }
-    .crea-btn-toggle-filters:hover { border-color: var(--crea-front-primary); color: var(--crea-front-primary); }
-    .crea-filters-panel { background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 20px 25px; display: none; }
+    #crea-visor-<?php echo $base_id; ?> .crea-btn-toggle-filters { background: transparent; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 13px; transition: all 0.2s; display: flex; align-items: center; gap: 5px; color: inherit; height: 32px; box-sizing: border-box; }
+    #crea-visor-<?php echo $base_id; ?> .crea-btn-toggle-filters:hover { border-color: var(--crea-front-primary); color: var(--crea-front-primary); }
     
-    .crea-filter-section { margin-bottom: 20px; }
-    .crea-filter-section:last-child { margin-bottom: 0; }
-    .crea-filter-title { font-size: 14px; color: #334155; margin: 0 0 12px 0; font-weight: 700; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; }
-    
-    .crea-system-filters-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: end; }
-    .crea-dynamic-filters-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: end; }
-    
-    .crea-filter-col { display: flex; flex-direction: column; }
-    .crea-filter-col label.crea-flt-lbl { display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px; opacity: 0.85; color: #334155; }
-    .crea-filter-col input[type="date"] { width: 100%; padding: 0 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: inherit; font-size: 13px; height: 30px; box-sizing: border-box; outline: none; background: #fff; }
-    .crea-filter-col input[type="date"]:focus { border-color: var(--crea-front-primary); }
+    /* Configuración de cuadrículas de filtrado */
+    #crea-visor-<?php echo $base_id; ?> .crea-filters-panel { background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 20px 25px; display: none; }
+    #crea-visor-<?php echo $base_id; ?> .crea-filter-section { margin-bottom: 20px; }
+    #crea-visor-<?php echo $base_id; ?> .crea-filter-section:last-child { margin-bottom: 0; }
+    #crea-visor-<?php echo $base_id; ?> .crea-filter-title { font-size: 14px; color: #334155; margin: 0 0 12px 0; font-weight: 700; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; }
+    #crea-visor-<?php echo $base_id; ?> .crea-system-filters-grid, #crea-visor-<?php echo $base_id; ?> .crea-dynamic-filters-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: end; }
+    #crea-visor-<?php echo $base_id; ?> .crea-filter-col { display: flex; flex-direction: column; }
+    #crea-visor-<?php echo $base_id; ?> .crea-flt-lbl { font-size: 12px; font-weight: 600; margin-bottom: 6px; color: #334155; }
+    #crea-visor-<?php echo $base_id; ?> .crea-filter-col input[type="date"] { width: 100%; padding: 0 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: inherit; font-size: 13px; height: 30px; box-sizing: border-box; outline: none; background: #fff; }
+    #crea-visor-<?php echo $base_id; ?> .crea-filter-col input[type="date"]:focus { border-color: var(--crea-front-primary); }
 
-    .crea-switch-container { display: flex; align-items: center; gap: 10px; height: 30px; }
-    .crea-switch { position: relative; display: inline-block; width: 36px; height: 20px; margin: 0; }
-    .crea-switch input { opacity: 0; width: 0; height: 0; margin: 0; }
-    .crea-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 20px; }
-    .crea-slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
-    .crea-switch input:checked + .crea-slider { background-color: var(--crea-front-primary); }
-    .crea-switch input:checked + .crea-slider:before { transform: translateX(16px); }
-    .crea-switch-lbl { font-size: 13px; color: #64748b; font-weight: normal; transition: color 0.3s; cursor: pointer; user-select: none; }
-    .crea-switch-lbl.active { color: var(--crea-front-primary); font-weight: 600; }
+    /* Modificadores de estado de filtros (Switch) */
+    #crea-visor-<?php echo $base_id; ?> .crea-switch-container { display: flex; align-items: center; gap: 10px; height: 30px; }
+    #crea-visor-<?php echo $base_id; ?> .crea-switch { position: relative; display: inline-block; width: 36px; height: 20px; margin: 0; }
+    #crea-visor-<?php echo $base_id; ?> .crea-switch input { opacity: 0; width: 0; height: 0; margin: 0; }
+    #crea-visor-<?php echo $base_id; ?> .crea-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 20px; }
+    #crea-visor-<?php echo $base_id; ?> .crea-slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+    #crea-visor-<?php echo $base_id; ?> .crea-switch input:checked + .crea-slider { background-color: var(--crea-front-primary); }
+    #crea-visor-<?php echo $base_id; ?> .crea-switch input:checked + .crea-slider:before { transform: translateX(16px); }
+    #crea-visor-<?php echo $base_id; ?> .crea-switch-lbl { font-size: 13px; color: #64748b; cursor: pointer; user-select: none; }
+    #crea-visor-<?php echo $base_id; ?> .crea-switch-lbl.active { color: var(--crea-front-primary); font-weight: 600; }
 
-    .crea-filter-col .select2-container .select2-selection--single { height: 30px !important; border-color: #cbd5e1 !important; display: flex; align-items: center; background: #fff; border-radius: 4px; }
-    .crea-filter-col .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: normal !important; color: #334155 !important; font-size: 13px; padding-left: 10px; }
-    .crea-filter-col .select2-container--default .select2-selection--single .select2-selection__arrow { height: 28px !important; }
+    /* Especificidad estructural para control de librerías externas (Select2) */
+    #crea-visor-<?php echo $base_id; ?> .select2-container .select2-selection--single { height: 30px; border-color: #cbd5e1; display: flex; align-items: center; background: #fff; border-radius: 4px; }
+    #crea-visor-<?php echo $base_id; ?> .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: normal; font-size: 13px; color: #334155; padding-left: 10px; }
+    #crea-visor-<?php echo $base_id; ?> .select2-container--default .select2-selection--single .select2-selection__arrow { height: 28px; }
     
     @media (max-width: 900px) {
-        .crea-system-filters-grid { grid-template-columns: 1fr; gap: 15px; }
-        .crea-dynamic-filters-grid { grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        #crea-visor-<?php echo $base_id; ?> .crea-system-filters-grid { grid-template-columns: 1fr; gap: 15px; }
+        #crea-visor-<?php echo $base_id; ?> .crea-dynamic-filters-grid { grid-template-columns: repeat(2, 1fr); gap: 15px; }
     }
     @media (max-width: 600px) {
-        .crea-dynamic-filters-grid { grid-template-columns: 1fr; }
+        #crea-visor-<?php echo $base_id; ?> .crea-dynamic-filters-grid { grid-template-columns: 1fr; }
     }
 
-    /* TOOLBAR Y CONTROLES DE EXPORTACIÓN */
-    .crea-table-toolbar { padding: 15px 25px; border-bottom: 1px solid #e2e8f0; background: transparent; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
-    .crea-table-controls { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
-    .crea-control-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
-    .crea-table-controls select, .crea-search-box input { padding: 0 10px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; outline: none; height: 30px; box-sizing: border-box; transition: border-color 0.2s; font-family: inherit; font-size: 13px; }
-    .crea-table-controls select:focus, .crea-search-box input:focus { border-color: var(--crea-front-primary); }
+    #crea-visor-<?php echo $base_id; ?> .crea-table-toolbar { padding: 15px 25px; border-bottom: 1px solid #e2e8f0; background: transparent; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+    #crea-visor-<?php echo $base_id; ?> .crea-table-controls { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
+    #crea-visor-<?php echo $base_id; ?> .crea-control-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+    #crea-visor-<?php echo $base_id; ?> .crea-table-controls select, #crea-visor-<?php echo $base_id; ?> .crea-search-box input { padding: 0 10px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; outline: none; height: 30px; box-sizing: border-box; transition: border-color 0.2s; font-family: inherit; font-size: 13px; }
+    #crea-visor-<?php echo $base_id; ?> .crea-table-controls select:focus, #crea-visor-<?php echo $base_id; ?> .crea-search-box input:focus { border-color: var(--crea-front-primary); }
 
-    .crea-export-group { display: flex; gap: 5px; align-items: center; border-left: 1px solid #e2e8f0; padding-left: 15px; margin-left: 5px; }
-    .crea-btn-export { background: #f8fafc; border: 1px solid #cbd5e1; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600; color: #334155; transition: all 0.2s; display: flex; align-items: center; font-family: inherit; }
-    .crea-btn-export:hover { background: #f1f5f9; border-color: var(--crea-front-primary); color: var(--crea-front-primary); }
+    #crea-visor-<?php echo $base_id; ?> .crea-export-group { display: flex; gap: 5px; align-items: center; border-left: 1px solid #e2e8f0; padding-left: 15px; margin-left: 5px; }
+    #crea-visor-<?php echo $base_id; ?> .crea-btn-export { background: #f8fafc; border: 1px solid #cbd5e1; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600; color: #334155; transition: all 0.2s; display: flex; align-items: center; font-family: inherit; }
+    #crea-visor-<?php echo $base_id; ?> .crea-btn-export:hover { background: #f1f5f9; border-color: var(--crea-front-primary); color: var(--crea-front-primary); }
 
-    .crea-col-selector { position: relative; }
-    .crea-col-dropdown { position: absolute; top: 100%; left: 0; background: #fff; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 4px; padding: 10px; z-index: 100; display: none; min-width: 200px; max-height: 300px; overflow-y: auto; margin-top: 5px; }
-    .crea-col-dropdown label { display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 5px 0; cursor: pointer; }
-    .crea-col-dropdown label:hover { background: #f8fafc; }
+    #crea-visor-<?php echo $base_id; ?> .crea-col-selector { position: relative; }
+    #crea-visor-<?php echo $base_id; ?> .crea-col-dropdown { position: absolute; top: 100%; left: 0; background: #fff; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 4px; padding: 10px; z-index: 100; display: none; min-width: 200px; max-height: 300px; overflow-y: auto; margin-top: 5px; }
+    #crea-visor-<?php echo $base_id; ?> .crea-col-dropdown label { display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 5px 0; cursor: pointer; }
+    #crea-visor-<?php echo $base_id; ?> .crea-col-dropdown label:hover { background: #f8fafc; }
 
-    .crea-control-item .select2-container .select2-selection--single { height: 30px !important; border-color: #cbd5e1 !important; display: flex; align-items: center; border-radius: 4px; }
-    .crea-control-item .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: normal !important; color: #334155; font-size: 13px; }
-    .crea-control-item .select2-container--default .select2-selection--single .select2-selection__arrow { height: 28px !important; }
+    #crea-visor-<?php echo $base_id; ?> .crea-search-box { position: relative; width: 100%; max-width: 250px; display: flex; align-items: center; }
+    #crea-visor-<?php echo $base_id; ?> .crea-search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; opacity: 0.4; pointer-events: none; }
+    #crea-visor-<?php echo $base_id; ?> .crea-search-box input { width: 100%; padding-left: 32px; box-sizing: border-box; }
 
-    .crea-search-box { position: relative; width: 100%; max-width: 250px; display: flex; align-items: center; }
-    .crea-search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; opacity: 0.4; pointer-events: none; }
-    .crea-search-box input { width: 100%; padding-left: 32px; box-sizing: border-box; }
+    /* Formato de matriz de datos general */
+    #crea-visor-<?php echo $base_id; ?> .crea-table-responsive { width: 100%; overflow-x: auto; max-height: 600px; }
+    #crea-visor-<?php echo $base_id; ?> .crea-frontend-table { width: 100%; border-collapse: collapse; text-align: left; white-space: nowrap; margin: 0; }
+    #crea-visor-<?php echo $base_id; ?> .crea-frontend-table th, #crea-visor-<?php echo $base_id; ?> .crea-frontend-table td { padding: 12px 20px; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
+    #crea-visor-<?php echo $base_id; ?> .crea-frontend-table th { background-color: var(--crea-front-th-bg); color: var(--crea-front-th-text); position: sticky; top: 0; z-index: 10; cursor: pointer; user-select: none; }
+    #crea-visor-<?php echo $base_id; ?> .crea-frontend-table tbody tr:nth-child(odd) { background-color: var(--crea-front-tr-odd-bg); color: var(--crea-front-tr-odd-text); }
+    #crea-visor-<?php echo $base_id; ?> .crea-frontend-table tbody tr:nth-child(even) { background-color: var(--crea-front-tr-even-bg); color: var(--crea-front-tr-even-text); }
+    #crea-visor-<?php echo $base_id; ?> .crea-frontend-table th .sort-icon { opacity: 0.5; margin-left: 5px; font-size: 11px; }
+    #crea-visor-<?php echo $base_id; ?> .crea-frontend-table tbody tr { transition: opacity 0.1s; }
+    #crea-visor-<?php echo $base_id; ?> .crea-frontend-table tbody tr:hover { opacity: 0.85; }
 
-    /* ESTRUCTURA DE LA TABLA */
-    .crea-table-responsive { width: 100%; overflow-x: auto; max-height: 600px; }
-    .crea-frontend-table { width: 100%; border-collapse: collapse; text-align: left; white-space: nowrap; margin: 0; }
-    .crea-frontend-table th, .crea-frontend-table td { padding: 12px 20px; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
-    .crea-frontend-table th { background-color: var(--crea-front-th-bg); color: var(--crea-front-th-text); position: sticky; top: 0; z-index: 10; cursor: pointer; user-select: none; }
-    .crea-frontend-table tbody tr:nth-child(odd) { background-color: var(--crea-front-tr-odd-bg); color: var(--crea-front-tr-odd-text); }
-    .crea-frontend-table tbody tr:nth-child(even) { background-color: var(--crea-front-tr-even-bg); color: var(--crea-front-tr-even-text); }
-    .crea-frontend-table th .sort-icon { opacity: 0.5; margin-left: 5px; font-size: 11px; }
-    .crea-frontend-table tbody tr { transition: opacity 0.1s; }
-    .crea-frontend-table tbody tr:hover { opacity: 0.85; }
+    #crea-visor-<?php echo $base_id; ?> .crea-frontend-table td.crea-cell-sys { font-weight: 600; opacity: 0.8; }
+    #crea-visor-<?php echo $base_id; ?> .crea-frontend-table td.crea-cell-longtext { max-width: 350px; white-space: normal; word-wrap: break-word; line-height: 1.5; }
+    #crea-visor-<?php echo $base_id; ?> .crea-time-sys { font-weight: 600; }
+    #crea-visor-<?php echo $base_id; ?> .crea-time-user { font-size: 0.85em; opacity: 0.6; margin-top: 2px; }
 
-    .crea-frontend-table td.crea-cell-sys { font-weight: 600; opacity: 0.8; }
-    .crea-frontend-table td.crea-cell-longtext { max-width: 350px; white-space: normal; word-wrap: break-word; line-height: 1.5; }
-    .crea-time-sys { font-weight: 600; }
-    .crea-time-user { font-size: 0.85em; opacity: 0.6; margin-top: 2px; }
+    /* Modificadores de estado para columnas fijas */
+    #crea-visor-<?php echo $base_id; ?> .crea-column-sticky-right {
+        position: sticky; right: 0; z-index: 5; border-left: 1px solid #e2e8f0; box-shadow: -2px 0 5px rgba(0,0,0,0.02);
+    }
+    #crea-visor-<?php echo $base_id; ?> .crea-column-sticky-left {
+        position: sticky; left: 0; z-index: 5; border-right: 1px solid #e2e8f0; box-shadow: 2px 0 5px rgba(0,0,0,0.02);
+    }
+    #crea-visor-<?php echo $base_id; ?> .crea-frontend-table tbody tr:nth-child(odd) td.crea-column-sticky-right,
+    #crea-visor-<?php echo $base_id; ?> .crea-frontend-table tbody tr:nth-child(odd) td.crea-column-sticky-left { 
+        background-color: var(--crea-front-tr-odd-bg); 
+    }
+    #crea-visor-<?php echo $base_id; ?> .crea-frontend-table tbody tr:nth-child(even) td.crea-column-sticky-right,
+    #crea-visor-<?php echo $base_id; ?> .crea-frontend-table tbody tr:nth-child(even) td.crea-column-sticky-left { 
+        background-color: var(--crea-front-tr-even-bg); 
+    }
+    #crea-visor-<?php echo $base_id; ?> .crea-frontend-table th.crea-column-sticky-right,
+    #crea-visor-<?php echo $base_id; ?> .crea-frontend-table th.crea-column-sticky-left { z-index: 15; }
 
-    <?php if ($is_editor_mode) : ?>
-    .crea-btn-action { background: var(--crea-front-primary); color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: opacity 0.2s; }
-    .crea-btn-action:hover { opacity: 0.8; }
-    .crea-btn-action svg { width: 14px; height: 14px; }
-    <?php endif; ?>
+    #crea-visor-<?php echo $base_id; ?> .crea-btn-action { background: var(--crea-front-primary); color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: opacity 0.2s; }
+    #crea-visor-<?php echo $base_id; ?> .crea-btn-action:hover { opacity: 0.8; }
+    #crea-visor-<?php echo $base_id; ?> .crea-btn-action svg { width: 14px; height: 14px; }
+    #crea-visor-<?php echo $base_id; ?> .crea-btn-cell { background: transparent; border: 1px solid #cbd5e1; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; transition: all 0.2s; color: #334155; }
+    #crea-visor-<?php echo $base_id; ?> .crea-btn-cell:hover { background: var(--crea-front-primary); color: #fff; border-color: var(--crea-front-primary); }
 
-    .crea-table-footer { display: flex; justify-content: space-between; align-items: center; padding: 15px 25px; background: transparent; border-top: 1px solid #e2e8f0; opacity: 0.9; font-size: 13px; }
-    .crea-pagination-controls { display: flex; gap: 5px; align-items: center; }
-    .crea-pagination-controls button { background: transparent; border: 1px solid #cbd5e1; color: inherit; padding: 4px 10px; border-radius: 4px; cursor: pointer; height: 30px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-family: inherit; }
-    .crea-pagination-controls button:hover:not(:disabled) { border-color: var(--crea-front-primary); color: var(--crea-front-primary); }
-    .crea-pagination-controls button:disabled { opacity: 0.4; cursor: not-allowed; }
-    .crea-pagination-controls button.active { background: var(--crea-front-primary); color: #fff; border-color: var(--crea-front-primary); }
-    .crea-empty-state { padding: 50px; text-align: center; opacity: 0.7; }
+    #crea-visor-<?php echo $base_id; ?> .crea-table-footer { display: flex; justify-content: space-between; align-items: center; padding: 15px 25px; background: transparent; border-top: 1px solid #e2e8f0; opacity: 0.9; font-size: 13px; }
+    #crea-visor-<?php echo $base_id; ?> .crea-pagination-controls { display: flex; gap: 5px; align-items: center; }
+    #crea-visor-<?php echo $base_id; ?> .crea-pagination-controls button { background: transparent; border: 1px solid #cbd5e1; color: inherit; padding: 4px 10px; border-radius: 4px; cursor: pointer; height: 30px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-family: inherit; }
+    #crea-visor-<?php echo $base_id; ?> .crea-pagination-controls button:hover:not(:disabled) { border-color: var(--crea-front-primary); color: var(--crea-front-primary); }
+    #crea-visor-<?php echo $base_id; ?> .crea-pagination-controls button:disabled { opacity: 0.4; cursor: not-allowed; }
+    #crea-visor-<?php echo $base_id; ?> .crea-pagination-controls button.active { background: var(--crea-front-primary); color: #fff; border-color: var(--crea-front-primary); }
+    #crea-visor-<?php echo $base_id; ?> .crea-empty-state { padding: 50px; text-align: center; opacity: 0.7; }
+
+    /* Contenedores Modales y Superposiciones */
+    .crea-modal-view-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15,23,42,0.8); z-index: 9999999; display: none; align-items: center; justify-content: center; backdrop-filter: blur(3px); }
+    .crea-modal-view-box { background: #fff; border-radius: 8px; max-width: 800px; width: 90%; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+    .crea-modal-view-header { padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
+    .crea-modal-view-header h3 { margin: 0; font-size: 1.2em; color: #0f172a; }
+    
+    /* ☀️ Botón de cierre vectorial con dimensiones explícitas y alineación Flexbox */
+    .crea-modal-view-close { 
+        background: transparent; border: none; cursor: pointer; color: #64748b; 
+        width: 32px; height: 32px; border-radius: 4px; padding: 0; 
+        display: flex; align-items: center; justify-content: center; 
+        transition: background-color 0.2s, color 0.2s; 
+    }
+    .crea-modal-view-close:hover { color: #e11d48; background-color: #f1f5f9; }
+    .crea-modal-view-close svg { width: 18px; height: 18px; }
+
+    .crea-modal-view-body { padding: 25px; overflow-y: auto; flex: 1; font-size: 14px; color: #334155; }
+    
+    .crea-view-grid { display: grid; grid-template-columns: 200px 1fr; gap: 15px; }
+    .crea-view-label { font-weight: 700; color: #64748b; font-size: 13px; text-transform: uppercase; }
+    .crea-view-value { line-height: 1.6; padding-bottom: 10px; border-bottom: 1px solid #f1f5f9; }
+
+    /* ☀️ Canvas de renderizado HTML con soporte completo para estilos inline, listas, tablas y medios */
+    .crea-html-preview-canvas {
+        line-height: 1.6;
+        color: #1e293b;
+    }
+    .crea-html-preview-canvas ul, .crea-html-preview-canvas ol {
+        margin: 1em 0;
+        padding-left: 2em;
+    }
+    .crea-html-preview-canvas ul { list-style-type: disc; }
+    .crea-html-preview-canvas ol { list-style-type: decimal; }
+    .crea-html-preview-canvas strong, .crea-html-preview-canvas b { font-weight: 700; }
+    .crea-html-preview-canvas em, .crea-html-preview-canvas i { font-style: italic; }
+    .crea-html-preview-canvas u { text-decoration: underline; }
+    .crea-html-preview-canvas table { border-collapse: collapse; width: 100%; margin: 1em 0; }
+    .crea-html-preview-canvas table td, .crea-html-preview-canvas table th { border: 1px solid #cbd5e1; padding: 8px 12px; }
+    .crea-html-preview-canvas iframe, .crea-html-preview-canvas video {
+        max-width: 100%;
+        display: block;
+        margin: 1em 0;
+        border-radius: 4px;
+    }
 </style>
 
 <div class="crea-table-wrapper" id="crea-visor-<?php echo $base_id; ?>">
     <div class="crea-table-header">
         <div>
             <h2><?php echo esc_html( $form['form_name'] ); ?></h2>
-            <p><?php echo $is_editor_mode ? 'Panel de Corrección y Visualización (Editor)' : 'Matriz de Datos Estructurada'; ?></p>
+            <p><?php echo $is_editor_mode ? 'Panel de Gestión de Registros' : 'Matriz de Datos Estructurada'; ?></p>
         </div>
         
         <div class="crea-header-actions">
-            <button type="button" class="crea-btn-toggle-filters" id="btn-toggle-filters">
+            <button type="button" class="crea-btn-toggle-filters" id="btn-toggle-filters-<?php echo $base_id; ?>">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
                 Filtros Avanzados
             </button>
-            <button type="button" class="crea-btn-fullscreen" id="btn-fullscreen-<?php echo $base_id; ?>" title="Pantalla Completa Nativa">
+            <button type="button" class="crea-btn-fullscreen" id="btn-fullscreen-<?php echo $base_id; ?>" title="Activar Pantalla Completa">
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
             </button>
         </div>
@@ -207,7 +256,7 @@ foreach ( $fields as $f ) {
         </div>
     <?php else : ?>
         
-        <div class="crea-filters-panel" id="crea-filters-panel">
+        <div class="crea-filters-panel" id="crea-filters-panel-<?php echo $base_id; ?>">
             
             <?php if ($is_logged_in) : ?>
             <div class="crea-filter-section">
@@ -218,7 +267,7 @@ foreach ( $fields as $f ) {
                         <label class="crea-flt-lbl">Fecha de Captura</label>
                         <div class="crea-switch-container">
                             <span class="crea-switch-lbl active" id="lbl-switch-month">Año/Mes</span>
-                            <label class="crea-switch" title="Cambiar modo de fecha">
+                            <label class="crea-switch">
                                 <input type="checkbox" id="date_filter_mode_switch">
                                 <span class="crea-slider"></span>
                             </label>
@@ -287,11 +336,11 @@ foreach ( $fields as $f ) {
             <div class="crea-table-controls">
                 
                 <div class="crea-control-item crea-col-selector">
-                    <button type="button" class="crea-btn-toggle-filters" id="btn-toggle-cols">
+                    <button type="button" class="crea-btn-toggle-filters" id="btn-toggle-cols-<?php echo $base_id; ?>">
                         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                         Mostrar Columnas
                     </button>
-                    <div class="crea-col-dropdown" id="crea-col-dropdown"></div>
+                    <div class="crea-col-dropdown" id="crea-col-dropdown-<?php echo $base_id; ?>"></div>
                 </div>
 
                 <div class="crea-control-item">
@@ -333,7 +382,7 @@ foreach ( $fields as $f ) {
                 <thead>
                     <tr>
                         <?php if ($is_editor_mode) : ?>
-                            <th style="width: 80px; text-align: center;" data-always-visible="true">Acciones</th>
+                            <th class="crea-column-sticky-left" style="width: 80px; text-align: center;" data-always-visible="true">Acciones</th>
                         <?php endif; ?>
                         
                         <?php if ($is_logged_in) : ?>
@@ -348,16 +397,17 @@ foreach ( $fields as $f ) {
                             echo '<th data-sort="'.$sort_type.'" data-name="'.esc_attr($field['field_name']).'">' . esc_html( $field['field_name'] ) . ' <span class="sort-icon">↕</span></th>';
                         }
                         ?>
+                        <th class="crea-column-sticky-right" style="width: 80px; text-align: center;" data-always-visible="true">Detalles</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php foreach ( $records as $row ) : 
-                        $json_attr = $is_editor_mode ? ' data-json="'.esc_attr(wp_json_encode($row)).'"' : '';
+                        $json_attr = ' data-json="'.esc_attr(wp_json_encode($row)).'"';
                     ?>
                     <tr class="crea-data-row"<?php echo $json_attr; ?>>
                         
                         <?php if ($is_editor_mode) : ?>
-                        <td style="text-align: center;">
+                        <td class="crea-column-sticky-left" style="text-align: center;">
                             <button type="button" class="crea-btn-action crea-btn-edit" data-id="<?php echo esc_attr($row['id']); ?>" title="Editar Registro">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                                 Editar
@@ -385,12 +435,27 @@ foreach ( $fields as $f ) {
                                 $cell_class .= ' crea-cell-time';
                                 $sys_tz = isset($conf['time_zone']) ? $conf['time_zone'] : 'UTC';
                                 $sys_format = isset($conf['time_format']) ? $conf['time_format'] : '24h';
-                                echo '<td class="'.trim($cell_class).'" data-val="'.esc_attr($value).'" data-raw="'.esc_attr($value).'" data-tz="'.esc_attr($sys_tz).'" data-format="'.esc_attr($sys_format).'"></td>';
+                                echo '<td class="'.trim($cell_class).'" data-slug="'.esc_attr($slug).'" data-val="'.esc_attr($value).'" data-raw="'.esc_attr($value).'" data-tz="'.esc_attr($sys_tz).'" data-format="'.esc_attr($sys_format).'"></td>';
                             } else {
-                                echo '<td class="'.trim($cell_class).'" data-slug="'.esc_attr($slug).'" data-val="'.esc_attr($value).'">' . nl2br(esc_html($value)) . '</td>';
+                                $is_html = ($field['field_type'] === 'text_html');
+                                $display_val = $value;
+                                
+                                if ($is_html) {
+                                    $display_val = '<button type="button" class="crea-btn-cell crea-btn-view-html" data-slug="'.esc_attr($slug).'">Ver Diseño</button>';
+                                } elseif (mb_strlen($value) > 255) {
+                                    $display_val = mb_substr(strip_tags($value), 0, 255) . ' [...]';
+                                } else {
+                                    $display_val = nl2br(esc_html($value));
+                                }
+
+                                echo '<td class="'.trim($cell_class).'" data-slug="'.esc_attr($slug).'" data-val="'.esc_attr($value).'">' . $display_val . '</td>';
                             }
                         }
                         ?>
+
+                        <td class="crea-column-sticky-right" style="text-align: center;">
+                            <button type="button" class="crea-btn-cell crea-btn-view-full">Ver</button>
+                        </td>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -405,15 +470,32 @@ foreach ( $fields as $f ) {
     <?php endif; ?>
 </div>
 
-<div id="crea-export-limit-modal-<?php echo $base_id; ?>" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15,23,42,0.8); z-index: 9999999; display: none; align-items: center; justify-content: center; backdrop-filter: blur(3px);">
-    <div style="background: #fff; border-radius: 8px; max-width: 450px; width: 90%; text-align: center; padding: 40px 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
-        <svg viewBox="0 0 24 24" width="60" height="60" fill="none" stroke="#f59e0b" stroke-width="2" style="margin-bottom: 20px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-        <h3 style="margin: 0 0 15px 0; font-size: 1.5em; color: #0f172a; font-family: inherit;">Límite Superado</h3>
+<!-- Estructura del modal de límite de exportación masiva -->
+<div id="crea-export-limit-modal-<?php echo $base_id; ?>" class="crea-modal-view-overlay">
+    <div class="crea-modal-view-box" style="max-width: 450px; text-align: center; padding: 40px 30px;">
+        <svg viewBox="0 0 24 24" width="60" height="60" fill="none" stroke="#f59e0b" stroke-width="2" style="margin: 0 auto 20px auto; display:block;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        <h3 style="margin: 0 0 15px 0; font-size: 1.5em; color: #0f172a;">Límite Superado</h3>
         <p style="color: #475569; font-size: 14px; line-height: 1.6; margin-bottom: 25px;">
             Estás intentando exportar <strong id="crea-export-count-<?php echo $base_id; ?>" style="color: #0f172a; font-size: 16px;">0</strong> registros.<br><br>
-            Esto supera la capacidad segura de <strong>5,000 registros</strong> para el front-end. Para exportaciones masivas, contacta al administrador del sistema o ingresa al portal de datos abiertos.
+            Esto supera la capacidad segura de <strong>5,000 registros</strong> para el entorno cliente. Para extracciones masivas, contacta al administrador del sistema.
         </p>
-        <button type="button" class="crea-btn-close-limit" style="background: var(--crea-front-primary); color: #fff; border: none; padding: 10px 25px; border-radius: 4px; font-weight: 600; cursor: pointer; font-family: inherit;">Entendido</button>
+        <button type="button" class="crea-btn-action crea-btn-close-limit" style="margin: 0 auto;">Entendido</button>
+    </div>
+</div>
+
+<!-- Estructura del modal de visualización de registros -->
+<div id="crea-modal-view-<?php echo $base_id; ?>" class="crea-modal-view-overlay">
+    <div class="crea-modal-view-box">
+        <div class="crea-modal-view-header">
+            <h3 id="crea-modal-title-<?php echo $base_id; ?>">Detalles</h3>
+            <button type="button" class="crea-modal-view-close" aria-label="Cerrar modal">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="crea-modal-view-body" id="crea-modal-content-<?php echo $base_id; ?>"></div>
     </div>
 </div>
 
@@ -428,28 +510,24 @@ document.addEventListener('DOMContentLoaded', function() {
     const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
     const isEditorMode = <?php echo $is_editor_mode ? 'true' : 'false'; ?>;
     
-    // --- 0. LÓGICA DE PANTALLA COMPLETA NATIVA ---
-    const btnFullscreen = document.getElementById('btn-fullscreen-<?php echo $base_id; ?>');
+    const btnFullscreen = document.getElementById(`btn-fullscreen-${baseId}`);
     if (btnFullscreen) {
         btnFullscreen.addEventListener('click', () => {
             if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-                // Entrar a Fullscreen
                 if (wrapper.requestFullscreen) {
                     wrapper.requestFullscreen();
-                } else if (wrapper.webkitRequestFullscreen) { /* Safari */
+                } else if (wrapper.webkitRequestFullscreen) {
                     wrapper.webkitRequestFullscreen();
                 }
             } else {
-                // Salir de Fullscreen
                 if (document.exitFullscreen) {
                     document.exitFullscreen();
-                } else if (document.webkitExitFullscreen) { /* Safari */
+                } else if (document.webkitExitFullscreen) {
                     document.webkitExitFullscreen();
                 }
             }
         });
 
-        // Escuchar el evento del navegador para cambiar el ícono
         document.addEventListener('fullscreenchange', handleFullscreenChange);
         document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
 
@@ -462,9 +540,62 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // --- 1. LÓGICA DE OCULTAR COLUMNAS ---
-    const btnToggleCols = document.getElementById('btn-toggle-cols');
-    const colDropdown = document.getElementById('crea-col-dropdown');
+    // Inicialización de Modal de Visualización Detallada
+    const modalView = document.getElementById(`crea-modal-view-${baseId}`);
+    const modalViewContent = document.getElementById(`crea-modal-content-${baseId}`);
+    const modalViewTitle = document.getElementById(`crea-modal-title-${baseId}`);
+    
+    if (modalView) {
+        modalView.querySelector('.crea-modal-view-close').addEventListener('click', () => modalView.style.display = 'none');
+        modalView.addEventListener('click', (e) => { if(e.target === modalView) modalView.style.display = 'none'; });
+    }
+
+    wrapper.addEventListener('click', function(e) {
+        const btnViewFull = e.target.closest('.crea-btn-view-full');
+        const btnViewHtml = e.target.closest('.crea-btn-view-html');
+        
+        if (btnViewFull || btnViewHtml) {
+            const row = e.target.closest('tr');
+            if (!row) return;
+            const rowData = JSON.parse(row.getAttribute('data-json') || '{}');
+
+            if (btnViewFull) {
+                modalViewTitle.textContent = `Detalles del Registro #${rowData.id || ''}`;
+                let html = '<div class="crea-view-grid">';
+                
+                if(rowData.created_at) html += `<div class="crea-view-label">Fecha de Captura:</div><div class="crea-view-value">${rowData.created_at}</div>`;
+                
+                const headers = Array.from(document.querySelectorAll(`#crea-main-table-${baseId} thead th[data-name]`));
+                headers.forEach(th => {
+                    const name = th.getAttribute('data-name');
+                    const cellIndex = th.cellIndex;
+                    const td = row.children[cellIndex];
+                    if (td && td.hasAttribute('data-slug')) {
+                        const slug = td.getAttribute('data-slug');
+                        const val = rowData[slug] || '<em>Vacío</em>';
+                        // ☀️ Inserción estructurada dentro de canvas para visualización coherente en ficha completa
+                        const formattedVal = (td.getAttribute('data-type') === 'text_html' || td.classList.contains('crea-cell-longtext'))
+                            ? `<div class="crea-html-preview-canvas">${val}</div>`
+                            : val;
+                        html += `<div class="crea-view-label">${name}:</div><div class="crea-view-value">${formattedVal}</div>`;
+                    }
+                });
+                
+                html += '</div>';
+                modalViewContent.innerHTML = html;
+                modalView.style.display = 'flex';
+            } 
+            else if (btnViewHtml) {
+                const slug = btnViewHtml.getAttribute('data-slug');
+                modalViewTitle.textContent = 'Vista Previa de Diseño HTML';
+                modalViewContent.innerHTML = `<div class="crea-html-preview-canvas">${rowData[slug] || ''}</div>`;
+                modalView.style.display = 'flex';
+            }
+        }
+    });
+
+    const btnToggleCols = document.getElementById(`btn-toggle-cols-${baseId}`);
+    const colDropdown = document.getElementById(`crea-col-dropdown-${baseId}`);
     const mainTable = document.getElementById(`crea-main-table-${baseId}`);
     const dynamicStyles = document.getElementById(`crea-dynamic-styles-${baseId}`);
     const ths = Array.from(mainTable.querySelectorAll('thead th'));
@@ -486,6 +617,7 @@ document.addEventListener('DOMContentLoaded', function() {
         colDropdown.addEventListener('change', function(e) { if (e.target.tagName === 'INPUT') applyColumnVisibility(); });
     }
 
+    // Inyección de CSS dinámico para visibilidad de columnas con alta especificidad
     function applyColumnVisibility() {
         if (!colDropdown) return;
         const checkboxes = colDropdown.querySelectorAll('input[type="checkbox"]');
@@ -493,7 +625,7 @@ document.addEventListener('DOMContentLoaded', function() {
         checkboxes.forEach(chk => {
             if (!chk.checked) {
                 const nth = parseInt(chk.value) + 1;
-                cssStr += `#crea-main-table-${baseId} th:nth-child(${nth}), #crea-main-table-${baseId} td:nth-child(${nth}) { display: none !important; }\n`;
+                cssStr += `#crea-visor-${baseId} table.crea-frontend-table th:nth-child(${nth}), #crea-visor-${baseId} table.crea-frontend-table td:nth-child(${nth}) { display: none; }\n`;
                 ths[parseInt(chk.value)].classList.add('crea-hidden-col-export');
             } else {
                 ths[parseInt(chk.value)].classList.remove('crea-hidden-col-export');
@@ -503,7 +635,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     applyColumnVisibility(); 
 
-    // --- 2. LÓGICA DE ZONA HORARIA ---
     if (typeof jQuery !== 'undefined') {
         jQuery('.crea-tz-select').select2();
         jQuery('.crea-tz-select').on('change', updateDatesAndTimes);
@@ -570,9 +701,8 @@ document.addEventListener('DOMContentLoaded', function() {
     saveTzCheckbox.addEventListener('change', updateDatesAndTimes);
     updateDatesAndTimes(); 
 
-    // --- 3. LÓGICA DE FILTROS AVANZADOS ---
-    const btnToggleFilters = document.getElementById('btn-toggle-filters');
-    const filtersPanel = document.getElementById('crea-filters-panel');
+    const btnToggleFilters = document.getElementById(`btn-toggle-filters-${baseId}`);
+    const filtersPanel = document.getElementById(`crea-filters-panel-${baseId}`);
     const searchInput = wrapper.querySelector('.crea-search-input');
     
     const dateSwitch = document.getElementById('date_filter_mode_switch');
@@ -585,7 +715,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const fltMonth = document.getElementById('flt-month');
     const fltStartDate = document.getElementById('flt-start-date');
     const fltEndDate = document.getElementById('flt-end-date');
-    
     const fltUser = document.getElementById('flt-user'); 
     const fltDynamics = document.querySelectorAll('.flt-dynamic');
     
@@ -725,7 +854,6 @@ document.addEventListener('DOMContentLoaded', function() {
         applySort();
     }
 
-    // --- 4. MOTOR DE ORDENAMIENTO ---
     let sortCol = -1;
     let sortAsc = true;
 
@@ -749,6 +877,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     ths.forEach((th) => {
+        if(th.hasAttribute('data-always-visible')) return;
         th.addEventListener('click', () => {
             const domIndex = th.cellIndex; 
             if (sortCol === domIndex) sortAsc = !sortAsc;
@@ -763,11 +892,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // --- 5. EXPORTACIÓN MASIVA (FRONTEND) ---
     const btnExports = wrapper.querySelectorAll('.crea-btn-export');
-    const limitModal = document.getElementById('crea-export-limit-modal-<?php echo $base_id; ?>');
+    const limitModal = document.getElementById(`crea-export-limit-modal-${baseId}`);
     
-    limitModal.querySelector('.crea-btn-close-limit').addEventListener('click', () => limitModal.style.display = 'none');
+    if (limitModal) {
+        limitModal.querySelector('.crea-btn-close-limit').addEventListener('click', () => limitModal.style.display = 'none');
+    }
     
     btnExports.forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -778,7 +908,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function exportFilteredData(format) {
         if (filteredRows.length > 5000) {
-            document.getElementById('crea-export-count-<?php echo $base_id; ?>').textContent = filteredRows.length.toLocaleString();
+            document.getElementById(`crea-export-count-${baseId}`).textContent = filteredRows.length.toLocaleString();
             limitModal.style.display = 'flex';
             return;
         }
@@ -851,7 +981,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // --- 6. PAGINACIÓN ---
     const tbody = wrapper.querySelector('tbody');
     const infoText = wrapper.querySelector('.crea-table-info');
     const paginationTop = wrapper.querySelector('#crea-pagination-top');
